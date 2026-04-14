@@ -177,9 +177,23 @@
     .modal{width:min(520px,92vw);background:#fff;color:var(--text);border-radius:28px;padding:24px;box-shadow:0 30px 70px rgba(21,35,50,.16)}
     .modal h3{margin:0 0 10px}.modal p{margin:0 0 18px;color:var(--muted);line-height:1.8}.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 
-    @media (max-width:1260px){.layout,.hero-dashboard,.split,.forms{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+
+    .reception-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:14px}
+    .reception-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .reception-card{padding:16px;border:1px solid #d9e3ef;border-radius:22px;background:#ffffff}
+    .reception-card .label{color:#7b8ca2;font-size:13px;margin-bottom:8px}
+    .reception-card .value{font-size:26px;font-weight:800}
+    .reception-card .sub{font-size:12px;color:#7b8ca2;margin-top:6px}
+    .stack{display:grid;gap:14px}
+    .summary-box{padding:16px;border-radius:20px;border:1px dashed #d9e3ef;background:#fbfdff}
+    .summary-box b{display:block;font-size:15px;margin-bottom:8px}
+    .summary-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eef3f8}
+    .summary-row:last-child{border-bottom:none}
+    .muted-sm{font-size:12px;color:#7b8ca2}
+
+    @media (max-width:1260px){.layout,.hero-dashboard,.split,.forms,.reception-grid{grid-template-columns:1fr}.stats,.reception-cards{grid-template-columns:repeat(2,1fr)}}
     @media (max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto;top:0}.topbar{top:10px}}
-    @media (max-width:760px){.login{padding:16px}.login-card{padding:22px;border-radius:24px}.login-head{flex-direction:column}.login-head h3{font-size:30px}.row,.quick-users,.stats,.mini-grid,.form-grid{grid-template-columns:1fr}.topbar h2{font-size:24px}}
+    @media (max-width:760px){.login{padding:16px}.login-card{padding:22px;border-radius:24px}.login-head{flex-direction:column}.login-head h3{font-size:30px}.row,.quick-users,.stats,.mini-grid,.form-grid,.reception-cards{grid-template-columns:1fr}.topbar h2{font-size:24px}}
   </style>
 </head>
 <body>
@@ -381,51 +395,97 @@
         </section>
 
         <section class="view hidden" data-view="booking">
-          <div class="forms">
-            <div class="panel">
-              <div class="section-title">
-                <h3>حجز موعد</h3>
-                <span>الحالة تصل من الأخصائي إلى الاستقبال</span>
+          <div class="reception-cards" id="receptionCards"></div>
+
+          <div class="reception-grid">
+            <div class="stack">
+              <div class="panel">
+                <div class="section-title">
+                  <h3>استلام الحالات من الأخصائي</h3>
+                  <span>الحالات الجاهزة بانتظار الاستقبال</span>
+                </div>
+                <div class="toolbar">
+                  <button class="btn btn-soft" id="refreshReceptionBtn" type="button">تحديث القائمة</button>
+                </div>
+                <div class="table-wrap" style="margin-top:14px">
+                  <table>
+                    <thead>
+                      <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>الإجمالي</th><th>الإجراء</th></tr>
+                    </thead>
+                    <tbody id="pendingReceptionTable"></tbody>
+                  </table>
+                </div>
               </div>
-              <div class="form-grid">
-                <div class="field"><label>الحالة الجاهزة من الأخصائي</label><select id="bookCase"></select></div>
-                <div class="field"><label>العميل</label><input id="bookClientNameView" type="text" readonly /></div>
-                <div class="field"><label>التشخيص</label><input id="bookDiagnosisView" type="text" readonly /></div>
-                <div class="field"><label>الأخصائي</label><input id="bookSpecialistView" type="text" readonly /></div>
-                <div class="field"><label>نوع الجلسة</label><select id="bookSessionType"><option>شبكية</option><option>شامات</option><option>تكثيف</option><option>تاج</option><option>صلع</option><option>شنب</option><option>دقن</option><option>حواجب</option></select></div>
-                <div class="field"><label>نوع الخدمة</label><select id="bookService"><option>جلسة أولى</option><option>ثانية</option><option>ثالثة</option><option>رابعة</option></select></div>
-                <div class="field"><label>عدد الجلسات</label><input id="bookSessionsCountView" type="number" readonly /></div>
-                <div class="field"><label>سعر الجلسة</label><input id="bookPricePerSessionView" type="number" readonly /></div>
-                <div class="field"><label>الإجمالي</label><input id="bookTotalView" type="number" readonly /></div>
-                <div class="field"><label>المدفوع</label><input id="bookPaid" type="number" placeholder="0" /></div>
-                <div class="field"><label>المتبقي</label><input id="bookRemaining" type="number" readonly /></div>
-                <div class="field"><label>طريقة الدفع</label><select id="bookPayment"><option>شبكة</option><option>كاش</option><option>تقسيط</option></select></div>
-                <div class="field"><label>التاريخ</label><input id="bookDate" type="date" /></div>
-                <div class="field"><label>الوقت</label><input id="bookTime" type="time" /></div>
-                <div class="field"><label>نوع العميل</label><select id="bookClientType"><option>جديد</option><option>جلسات قائمة</option></select></div>
-                <div class="field full"><label>ملاحظات الاستقبال</label><textarea id="bookNotes" placeholder="أدخل ملاحظات الاستقبال"></textarea></div>
+
+              <div class="panel">
+                <div class="section-title">
+                  <h3>مواعيد اليوم والتحصيل</h3>
+                  <span>متابعة الاستقبال</span>
+                </div>
+                <div class="toolbar">
+                  <button class="btn btn-soft" id="todayPhonesBtn" type="button">عرض أرقام عملاء اليوم</button>
+                  <button class="btn btn-soft" id="markExecutedBtn" type="button">تنفيذ أول موعد اليوم</button>
+                </div>
+                <div class="table-wrap" style="margin-top:14px">
+                  <table>
+                    <thead>
+                      <tr><th>العميل</th><th>الأخصائي</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>التحصيل</th><th>التاريخ</th><th>الحالة</th></tr>
+                    </thead>
+                    <tbody id="bookingsTable"></tbody>
+                  </table>
+                </div>
               </div>
-              <div style="margin-top:16px"><button class="btn btn-primary" id="saveBookingBtn" type="button">تأكيد الحجز</button></div>
             </div>
 
-            <div class="panel">
-              <div class="section-title">
-                <h3>مواعيد اليوم</h3>
-                <span>اختصار عملاء اليوم</span>
+            <div class="stack">
+              <div class="panel">
+                <div class="section-title">
+                  <h3>استلام وتحضير الحجز</h3>
+                  <span>شاشة استقبال أوضح للتحصيل والتأكيد</span>
+                </div>
+                <div class="form-grid">
+                  <div class="field"><label>الحالة الجاهزة من الأخصائي</label><select id="bookCase"></select></div>
+                  <div class="field"><label>العميل</label><input id="bookClientNameView" type="text" readonly /></div>
+                  <div class="field"><label>التشخيص</label><input id="bookDiagnosisView" type="text" readonly /></div>
+                  <div class="field"><label>الأخصائي</label><input id="bookSpecialistView" type="text" readonly /></div>
+                  <div class="field"><label>نوع الجلسة</label><select id="bookSessionType"><option>شبكية</option><option>شامات</option><option>تكثيف</option><option>تاج</option><option>صلع</option><option>شنب</option><option>دقن</option><option>حواجب</option></select></div>
+                  <div class="field"><label>نوع الخدمة</label><select id="bookService"><option>جلسة أولى</option><option>ثانية</option><option>ثالثة</option><option>رابعة</option></select></div>
+                  <div class="field"><label>عدد الجلسات</label><input id="bookSessionsCountView" type="number" readonly /></div>
+                  <div class="field"><label>سعر الجلسة</label><input id="bookPricePerSessionView" type="number" readonly /></div>
+
+                  <div class="field"><label>الإجمالي قبل الخصم</label><input id="bookSubtotalView" type="number" readonly /></div>
+                  <div class="field"><label>الخصم</label><input id="bookDiscount" type="number" placeholder="0" /></div>
+                  <div class="field"><label>الإجمالي النهائي</label><input id="bookTotalView" type="number" readonly /></div>
+                  <div class="field"><label>المدفوع</label><input id="bookPaid" type="number" placeholder="0" /></div>
+                  <div class="field"><label>المتبقي</label><input id="bookRemaining" type="number" readonly /></div>
+                  <div class="field"><label>طريقة الدفع</label><select id="bookPayment"><option>شبكة</option><option>كاش</option><option>تحويل</option><option>تقسيط</option></select></div>
+
+                  <div class="field"><label>حالة التأكيد</label><select id="bookConfirmStatus"><option value="confirmed">مؤكد</option><option value="pending">بانتظار تأكيد</option><option value="rescheduled">إعادة جدولة</option></select></div>
+                  <div class="field"><label>حالة التحصيل</label><select id="bookCollectionStatus"><option value="partial">مدفوع جزئي</option><option value="paid">مدفوع كامل</option><option value="unpaid">غير مدفوع</option></select></div>
+                  <div class="field"><label>رقم السند</label><input id="bookReceiptNo" type="text" placeholder="اختياري" /></div>
+                  <div class="field"><label>تاريخ متابعة التحصيل</label><input id="bookFollowupDate" type="date" /></div>
+
+                  <div class="field"><label>التاريخ</label><input id="bookDate" type="date" /></div>
+                  <div class="field"><label>الوقت</label><input id="bookTime" type="time" /></div>
+                  <div class="field"><label>نوع العميل</label><select id="bookClientType"><option>جديد</option><option>جلسات قائمة</option></select></div>
+                  <div class="field"><label>ملاحظة التقسيط</label><input id="bookInstallmentNote" type="text" placeholder="مثال: دفعتين متبقيتين" /></div>
+                  <div class="field full"><label>ملاحظات الاستقبال</label><textarea id="bookNotes" placeholder="أدخل ملاحظات الاستقبال والاستلام"></textarea></div>
+                </div>
+
+                <div class="summary-box" style="margin-top:16px">
+                  <b>ملخص الاستلام والتحصيل</b>
+                  <div class="summary-row"><span>العميل</span><strong id="sumClient">-</strong></div>
+                  <div class="summary-row"><span>الأخصائي</span><strong id="sumSpecialist">-</strong></div>
+                  <div class="summary-row"><span>التشخيص</span><strong id="sumDiagnosis">-</strong></div>
+                  <div class="summary-row"><span>الإجمالي النهائي</span><strong id="sumTotal">0 ر.س</strong></div>
+                  <div class="summary-row"><span>المتبقي</span><strong id="sumRemaining">0 ر.س</strong></div>
+                </div>
+
+                <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                  <button class="btn btn-primary" id="saveBookingBtn" type="button">تأكيد الاستلام والحجز</button>
+                  <button class="btn btn-soft" id="clearReceptionBtn" type="button">تفريغ الحقول</button>
+                </div>
               </div>
-              <div class="toolbar">
-                <button class="btn btn-soft" id="todayPhonesBtn" type="button">عرض أرقام عملاء اليوم</button>
-                <button class="btn btn-soft" id="markExecutedBtn" type="button">تنفيذ أول موعد اليوم</button>
-              </div>
-              <div class="table-wrap" style="margin-top:14px">
-                <table>
-                  <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th></tr>
-                  </thead>
-                  <tbody id="bookingsTable"></tbody>
-                </table>
-              </div>
-              <div class="note">الاستقبال يستقبل الحالة الجاهزة من الأخصائي ويُدخل المدفوع فقط.</div>
             </div>
           </div>
         </section>
@@ -1022,14 +1082,8 @@
 
     function fillClientSelects() {
       const clientsOptions = state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-      if ($('#caseClient')) $('#caseClient').innerHTML = clientsOptions || '<option value="">لا يوجد عملاء</option>';
-    }
-
-    function fillSpecialists() {
-      const specialists = state.users.filter(u => u.role === 'specialist');
-      const select = $('#caseSpecialist');
-      if (!select) return;
-      select.innerHTML = specialists.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">لا يوجد أخصائيون</option>';
+      if ($('#caseClient')) $('#caseClient').innerHTML = clientsOptions;
+      fillSpecialists();
     }
 
     function caseStatusLabel(status) {
@@ -1042,6 +1096,85 @@
       if (status === 'منفذ') return '<span class="badge ok">منفذ</span>';
       if (status === 'ملغي') return '<span class="badge danger">ملغي</span>';
       return '<span class="badge draft">مؤكد</span>';
+    }
+
+    function fillSpecialists() {
+      const specialists = state.users.filter(u => u.role === 'specialist');
+      if ($('#caseSpecialist')) {
+        $('#caseSpecialist').innerHTML = specialists.map(s => `<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">لا يوجد أخصائيون</option>';
+      }
+    }
+
+    function getBookingMetaFromNotes(notes = '') {
+      const marker = 'RECEPTION_META::';
+      const line = String(notes).split('\n').find(x => x.startsWith(marker));
+      if (!line) return {};
+      try { return JSON.parse(line.slice(marker.length)); } catch { return {}; }
+    }
+
+    function buildBookingNotes(caseRow) {
+      const meta = {
+        confirmStatus: $('#bookConfirmStatus').value,
+        collectionStatus: $('#bookCollectionStatus').value,
+        receiptNo: $('#bookReceiptNo').value.trim(),
+        discount: Number($('#bookDiscount').value || 0),
+        followupDate: $('#bookFollowupDate').value || '',
+        installmentNote: $('#bookInstallmentNote').value.trim()
+      };
+      return [
+        `التشخيص: ${caseRow.diagnosis || '-'}`,
+        `عدد الجلسات: ${caseRow.sessionsCount || 0}`,
+        `سعر الجلسة: ${caseRow.pricePerSession || 0}`,
+        $('#bookNotes').value.trim(),
+        `RECEPTION_META::${JSON.stringify(meta)}`
+      ].filter(Boolean).join(' | ');
+    }
+
+    function collectionStatusLabel(v) {
+      return v === 'paid' ? 'مدفوع كامل' : v === 'unpaid' ? 'غير مدفوع' : 'مدفوع جزئي';
+    }
+
+    function renderReceptionCards() {
+      const pending = Object.values(state.cases).filter(c => c.planStatus === 'pending_booking').length;
+      const today = state.bookings.filter(b => b.date === todayStr());
+      const collected = today.reduce((a,b)=>a+Number(b.paid||0),0);
+      const remaining = today.reduce((a,b)=>a+Number(b.remaining||0),0);
+      $('#receptionCards').innerHTML = [
+        ['حالات بانتظار الاستلام', pending, 'قادمة من الأخصائي'],
+        ['مواعيد اليوم', today.length, 'متابعة استقبال'],
+        ['المحصل اليوم', `${collected.toLocaleString('ar-SA')} ر.س`, 'إجمالي المقبوض'],
+        ['المتبقي اليوم', `${remaining.toLocaleString('ar-SA')} ر.س`, 'يحتاج متابعة'],
+      ].map(([l,v,s]) => `<div class="reception-card"><div class="label">${l}</div><div class="value">${v}</div><div class="sub">${s}</div></div>`).join('');
+    }
+
+    function renderPendingReceptionTable() {
+      const rows = Object.values(state.cases).filter(c => c.planStatus === 'pending_booking');
+      $('#pendingReceptionTable').innerHTML = rows.map(c => {
+        const client = state.clients.find(x => x.id === c.clientId);
+        return `<tr>
+          <td>${client?.name || '-'}</td>
+          <td>${c.diagnosis || '-'}</td>
+          <td>${c.specialistName || '-'}</td>
+          <td>${Number(c.totalPrice || 0).toLocaleString('ar-SA')} ر.س</td>
+          <td><button class="btn btn-soft" type="button" data-pending-case="${c.clientId}">استلام</button></td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="5">لا توجد حالات بانتظار الاستقبال</td></tr>`;
+
+      $$('[data-pending-case]').forEach(btn => {
+        btn.onclick = () => {
+          $('#bookCase').value = btn.dataset.pendingCase;
+          fillBookingCaseDetails();
+          switchView('booking');
+        };
+      });
+    }
+
+    function updateReceptionSummary() {
+      $('#sumClient').textContent = $('#bookClientNameView').value || '-';
+      $('#sumSpecialist').textContent = $('#bookSpecialistView').value || '-';
+      $('#sumDiagnosis').textContent = $('#bookDiagnosisView').value || '-';
+      $('#sumTotal').textContent = `${Number($('#bookTotalView').value || 0).toLocaleString('ar-SA')} ر.س`;
+      $('#sumRemaining').textContent = `${Number($('#bookRemaining').value || 0).toLocaleString('ar-SA')} ر.س`;
     }
 
     function calcCaseTotal() {
@@ -1085,13 +1218,7 @@
       $('#caseSessions').value = c.sessionsCount || 0;
       $('#caseTotal').value = c.totalPrice || 0;
       $('#casePlanStatusView').value = caseStatusLabel(c.planStatus || 'draft');
-      if ($('#caseSpecialist')) {
-        if (c.specialistId) {
-          $('#caseSpecialist').value = String(c.specialistId);
-        } else if (state.currentUser?.role === 'specialist' && state.currentUser?.id) {
-          $('#caseSpecialist').value = String(state.currentUser.id);
-        }
-      }
+      if ($('#caseSpecialist') && c.specialistId) $('#caseSpecialist').value = String(c.specialistId);
       renderAttachmentsTable(clientId);
     }
 
@@ -1103,12 +1230,8 @@
       }
       const total = calcCaseTotal();
       const existing = state.cases[clientId];
-      const selectedSpecialistId = Number($('#caseSpecialist')?.value || 0);
-      const selectedSpecialist = state.users.find(u => u.id === selectedSpecialistId && u.role === 'specialist');
-      if (!selectedSpecialist) {
-        toast('اختر الأخصائي أولاً.', 'warn');
-        return false;
-      }
+      const specialistId = Number($('#caseSpecialist')?.value || 0) || null;
+      const specialist = state.users.find(u => u.id === specialistId) || state.currentUser || null;
       const payload = {
         client_id: clientId,
         gap_type: $('#caseGapType').value,
@@ -1121,8 +1244,8 @@
         sessions_count: Number($('#caseSessions').value || 0),
         total_price: total,
         plan_status: existing?.planStatus || 'draft',
-        specialist_name: selectedSpecialist.name,
-        specialist_id: selectedSpecialist.id,
+        specialist_name: specialist?.name || '',
+        specialist_id: specialist?.id || null,
         updated_at: new Date().toISOString()
       };
       try {
@@ -1244,24 +1367,41 @@
       $('#bookSpecialistView').value = c?.specialistName || '';
       $('#bookSessionsCountView').value = c?.sessionsCount || 0;
       $('#bookPricePerSessionView').value = c?.pricePerSession || 0;
-      $('#bookTotalView').value = c?.totalPrice || 0;
+      $('#bookSubtotalView').value = c?.totalPrice || 0;
+      const discount = Number($('#bookDiscount').value || 0);
+      const finalTotal = Math.max(0, Number(c?.totalPrice || 0) - discount);
+      $('#bookTotalView').value = finalTotal;
       const paid = Number($('#bookPaid').value || 0);
-      $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
+      $('#bookRemaining').value = Math.max(0, finalTotal - paid);
+      updateReceptionSummary();
     }
 
     function recalcBookingRemaining() {
-      const total = Number($('#bookTotalView').value || 0);
+      const subtotal = Number($('#bookSubtotalView').value || 0);
+      const discount = Number($('#bookDiscount').value || 0);
+      const total = Math.max(0, subtotal - discount);
+      $('#bookTotalView').value = total;
       const paid = Number($('#bookPaid').value || 0);
       $('#bookRemaining').value = Math.max(0, total - paid);
+      const collectionStatus = paid <= 0 ? 'unpaid' : (Math.max(0, total - paid) === 0 ? 'paid' : 'partial');
+      if ($('#bookCollectionStatus')) $('#bookCollectionStatus').value = collectionStatus;
+      updateReceptionSummary();
     }
 
     function clearBookingForm() {
       $('#bookPaid').value = '';
       $('#bookRemaining').value = '';
       $('#bookNotes').value = '';
+      $('#bookDiscount').value = '';
+      $('#bookReceiptNo').value = '';
+      $('#bookFollowupDate').value = '';
+      $('#bookInstallmentNote').value = '';
+      $('#bookConfirmStatus').value = 'confirmed';
+      $('#bookCollectionStatus').value = 'partial';
       $('#bookDate').value = todayStr();
       $('#bookTime').value = '';
       fillBookingCases();
+      updateReceptionSummary();
     }
 
     async function saveBooking() {
@@ -1271,7 +1411,7 @@
         toast('اختر حالة مرسلة من الأخصائي أولاً.', 'warn');
         return;
       }
-      const total = Number(caseRow.totalPrice || 0);
+      const total = Number($('#bookTotalView').value || 0);
       const paid = Number($('#bookPaid').value || 0);
       const remaining = Math.max(0, total - paid);
 
@@ -1287,13 +1427,8 @@
         paid,
         remaining,
         payment_method: $('#bookPayment').value,
-        notes: [
-          `التشخيص: ${caseRow.diagnosis || '-'}`,
-          `عدد الجلسات: ${caseRow.sessionsCount || 0}`,
-          `سعر الجلسة: ${caseRow.pricePerSession || 0}`,
-          $('#bookNotes').value.trim()
-        ].filter(Boolean).join(' | '),
-        status: 'confirmed'
+        notes: buildBookingNotes(caseRow),
+        status: $('#bookConfirmStatus').value === 'rescheduled' ? 'cancelled' : 'confirmed'
       };
 
       if (!b.booking_date || !b.booking_time || !b.specialist_name) {
@@ -1321,7 +1456,7 @@
           'Failed updating case status after booking'
         );
         const client = state.clients.find(c => c.id === b.client_id);
-        addNotification(`تم حجز موعد جديد للعميل ${client?.name || ''} مع ${b.specialist_name}`);
+        addNotification(`تم تأكيد استلام وحجز العميل ${client?.name || ''} مع ${b.specialist_name}`);
         clearBookingForm();
         await loadBookings();
         await loadCases();
@@ -1338,19 +1473,19 @@
         const c = state.clients.find(x => x.id === b.clientId);
         const caseRow = state.cases[b.clientId] || {};
         const total = Number(caseRow.totalPrice || (Number(b.paid || 0) + Number(b.remaining || 0)));
+        const meta = getBookingMetaFromNotes(b.notes);
         return `
           <tr>
             <td>${c?.name || '-'}</td>
-            <td>${caseRow.diagnosis || '-'}</td>
-            <td>${b.specialist}</td>
+            <td>${b.specialist || '-'}</td>
             <td>${total.toLocaleString('ar-SA')} ر.س</td>
             <td>${Number(b.paid || 0).toLocaleString('ar-SA')} ر.س</td>
             <td>${Number(b.remaining || 0).toLocaleString('ar-SA')} ر.س</td>
-            <td>${formatDateDisplay(b.date)}</td>
-            <td>${formatTime12(b.time)}</td>
+            <td>${collectionStatusLabel(meta.collectionStatus || (Number(b.remaining || 0) === 0 ? 'paid' : (Number(b.paid || 0) > 0 ? 'partial' : 'unpaid')))}</td>
+            <td>${formatDateDisplay(b.date)}<div class="muted-sm">${formatTime12(b.time)}</div></td>
             <td>${bookingStatusBadge(b.status)}</td>
           </tr>`;
-      }).join('') || `<tr><td colspan="9">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="8">لا توجد مواعيد</td></tr>`;
     }
 
     function showTodayPhones() {
@@ -1479,8 +1614,9 @@
     function renderAll() {
       renderHeader();
       fillClientSelects();
-      fillSpecialists();
       fillBookingCases();
+      renderReceptionCards();
+      renderPendingReceptionTable();
       renderStats();
       renderTimeline();
       renderClientsTable($('#clientSearch')?.value || '');
@@ -1489,6 +1625,7 @@
       renderInventory();
       renderUsers();
       fillCaseClientData();
+      updateReceptionSummary();
     }
 
     function bindEvents() {
@@ -1506,8 +1643,11 @@
       $('#saveBookingBtn').onclick = saveBooking;
       $('#todayPhonesBtn').onclick = showTodayPhones;
       $('#markExecutedBtn').onclick = markExecutedFirstToday;
+      $('#refreshReceptionBtn').onclick = async () => { await loadCases(); await loadBookings(); renderAll(); };
+      $('#clearReceptionBtn').onclick = clearBookingForm;
       $('#bookCase').onchange = fillBookingCaseDetails;
       $('#bookPaid').oninput = recalcBookingRemaining;
+      $('#bookDiscount').oninput = recalcBookingRemaining;
       $('#bookDate').value = todayStr();
 
       $('#caseClient').onchange = fillCaseClientData;
