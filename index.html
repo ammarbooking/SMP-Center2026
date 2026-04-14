@@ -484,6 +484,37 @@
               </table>
             </div>
 
+            <div class="panel" style="margin-top:18px;padding:18px;background:#f9fbff;border:1px solid #d9e3ef;">
+              <div class="section-title">
+                <h3>استخدام من المخزون</h3>
+                <span>المتاح للقراءة فقط، والأخصائي يختار ما يحتاجه للحالة</span>
+              </div>
+              <div class="form-grid">
+                <div class="field"><label>الصنف المتاح</label><select id="useInventoryItem"></select></div>
+                <div class="field"><label>الكمية المستخدمة</label><input id="useInventoryQty" type="number" min="1" placeholder="1" /></div>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-soft" id="addInventoryUsageBtn" type="button">إضافة للاستخدام</button>
+              </div>
+              <div class="table-wrap" style="margin-top:14px">
+                <table>
+                  <thead>
+                    <tr><th>الصنف</th><th>المتاح حاليًا</th><th>الحد الأدنى</th><th>الحالة</th></tr>
+                  </thead>
+                  <tbody id="caseInventoryAvailableTable"></tbody>
+                </table>
+              </div>
+              <div class="table-wrap" style="margin-top:14px">
+                <table>
+                  <thead>
+                    <tr><th>الصنف المستخدم</th><th>الكمية</th><th>الإجراء</th></tr>
+                  </thead>
+                  <tbody id="caseUsageTable"></tbody>
+                </table>
+              </div>
+              <div class="note">سيتم خصم هذه الكميات من المخزون تلقائيًا عند إرسال الحالة للاستقبال، ولا يمكن تعديل المخزون مباشرة من شاشة الأخصائي.</div>
+            </div>
+
             <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-soft" id="saveCaseBtn" type="button">حفظ الحالة</button>
               <button class="btn btn-primary" id="sendToReceptionBtn" type="button">إرسال للاستقبال</button>
@@ -724,6 +755,8 @@
         paymentReportMethod: row.payment_report_method || '',
         paymentReportNotes: row.payment_report_notes || '',
         paymentReportSentAt: row.payment_report_sent_at || null,
+        consumablesJson: row.consumables_json || '[]',
+        inventoryDeductedAt: row.inventory_deducted_at || null,
         sentToReceptionAt: row.sent_to_reception_at || null
       };
     }
@@ -889,7 +922,7 @@
       const role = state.currentUser?.role;
       const map = {
         admin: ['dashboard', 'stats', 'clients', 'booking', 'specialist', 'team', 'inventory', 'users'],
-        reception: ['dashboard', 'stats', 'clients', 'booking', 'inventory'],
+        reception: ['dashboard', 'stats', 'clients', 'booking'],
         specialist: ['dashboard', 'specialist']
       };
       const allowed = map[role] || [];
@@ -899,6 +932,7 @@
         btn.classList.remove('active');
       });
       $('#quickClientBtn').style.display = role === 'specialist' ? 'none' : 'inline-flex';
+      ['#invName','#invQty','#invMin','#invNotes','#saveInventoryBtn'].forEach(sel => { const el = $(sel); if (el) el.disabled = role !== 'admin'; });
       const first = $$('#menuNav button').find(btn => btn.style.display !== 'none');
       if (first) {
         first.classList.add('active');
@@ -1208,6 +1242,8 @@
       $('#caseTotal').value = c.totalPrice || 0;
       $('#casePlanStatusView').value = caseStatusLabel(c.planStatus || 'draft');
       renderAttachmentsTable(clientId);
+      renderCaseInventoryAvailable();
+      renderCaseUsageTable();
     }
 
     async function saveCase() {
@@ -1239,6 +1275,8 @@
         payment_report_method: existing?.paymentReportMethod || '',
         payment_report_notes: existing?.paymentReportNotes || '',
         payment_report_sent_at: existing?.paymentReportSentAt || null,
+        consumables_json: existing?.consumablesJson || '[]',
+        inventory_deducted_at: existing?.inventoryDeductedAt || null,
         updated_at: new Date().toISOString()
       };
       try {
@@ -1320,6 +1358,7 @@
       const ok = await saveCase();
       if (!ok) return;
       try {
+        await applyInventoryUsageForCase(clientId);
         await queryOrThrow(
           supabase.from('cases').update({
             plan_status: 'pending_booking',
@@ -1697,6 +1736,105 @@
         </tr>`).join('') || `<tr><td colspan="5">لا توجد بيانات</td></tr>`;
     }
 
+    function getCurrentCaseUsages() {
+      const clientId = Number($('#caseClient')?.value || 0);
+      const caseRow = state.cases[clientId] || {};
+      try {
+        const items = JSON.parse(caseRow.consumablesJson || '[]');
+        return Array.isArray(items) ? items : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function setCurrentCaseUsages(items) {
+      const clientId = Number($('#caseClient')?.value || 0);
+      if (!clientId) return;
+      const caseRow = state.cases[clientId] || { clientId };
+      caseRow.consumablesJson = JSON.stringify(items || []);
+      state.cases[clientId] = caseRow;
+      renderCaseUsageTable();
+    }
+
+    function fillInventoryUsageSelect() {
+      const select = $('#useInventoryItem');
+      if (!select) return;
+      select.innerHTML = '<option value="">اختر الصنف</option>' + state.inventory.map(i => `<option value="${i.id}">${i.name} — المتاح ${i.qty}</option>`).join('');
+    }
+
+    function renderCaseInventoryAvailable() {
+      const tbody = $('#caseInventoryAvailableTable');
+      if (!tbody) return;
+      tbody.innerHTML = state.inventory.map(i => {
+        const low = Number(i.qty) <= Number(i.min);
+        return `<tr><td>${i.name}</td><td>${i.qty}</td><td>${i.min}</td><td><span class="badge ${low ? 'warn' : 'ok'}">${low ? 'ناقص' : 'متاح'}</span></td></tr>`;
+      }).join('') || `<tr><td colspan="4">لا توجد أصناف</td></tr>`;
+      fillInventoryUsageSelect();
+    }
+
+    function renderCaseUsageTable() {
+      const tbody = $('#caseUsageTable');
+      if (!tbody) return;
+      const usages = getCurrentCaseUsages();
+      tbody.innerHTML = usages.map((u, idx) => `<tr><td>${u.itemName}</td><td>${u.qty}</td><td><button class="btn btn-danger" data-remove-usage="${idx}" type="button">حذف</button></td></tr>`).join('') || `<tr><td colspan="3">لم يتم اختيار أصناف لهذه الحالة</td></tr>`;
+      $$('[data-remove-usage]').forEach(btn => {
+        btn.onclick = () => {
+          const next = getCurrentCaseUsages().filter((_, i) => i !== Number(btn.dataset.removeUsage));
+          setCurrentCaseUsages(next);
+        };
+      });
+    }
+
+    function addInventoryUsage() {
+      const itemId = Number($('#useInventoryItem')?.value || 0);
+      const qty = Number($('#useInventoryQty')?.value || 0);
+      const item = state.inventory.find(i => i.id === itemId);
+      if (!itemId || !item) {
+        toast('اختر صنفًا من المخزون.', 'warn');
+        return;
+      }
+      if (!qty || qty <= 0) {
+        toast('أدخل كمية صحيحة.', 'warn');
+        return;
+      }
+      const usages = getCurrentCaseUsages();
+      const already = usages.find(u => u.itemId === itemId);
+      const requestedQty = qty + Number(already?.qty || 0);
+      if (requestedQty > Number(item.qty || 0)) {
+        toast(`الكمية المطلوبة للصنف ${item.name} أكبر من المتاح.`, 'warn');
+        return;
+      }
+      const next = already
+        ? usages.map(u => u.itemId === itemId ? { ...u, qty: requestedQty } : u)
+        : usages.concat([{ itemId: item.id, itemName: item.name, qty }]);
+      setCurrentCaseUsages(next);
+      $('#useInventoryQty').value = '';
+      addNotification(`تمت إضافة ${item.name} إلى استخدام الحالة.`);
+    }
+
+    async function applyInventoryUsageForCase(clientId) {
+      const caseRow = state.cases[clientId];
+      const usages = (() => { try { return JSON.parse(caseRow?.consumablesJson || '[]'); } catch (err) { return []; } })();
+      if (!usages.length || caseRow?.inventoryDeductedAt) return;
+      for (const usage of usages) {
+        const item = state.inventory.find(i => i.id === usage.itemId);
+        if (!item) throw new Error(`الصنف غير موجود: ${usage.itemName}`);
+        const newQty = Number(item.qty || 0) - Number(usage.qty || 0);
+        if (newQty < 0) throw new Error(`المخزون غير كافٍ للصنف: ${usage.itemName}`);
+        await queryOrThrow(
+          supabase.from('inventory').update({ qty: newQty }).eq('id', item.id),
+          'Failed deducting inventory'
+        );
+      }
+      await queryOrThrow(
+        supabase.from('cases').update({ inventory_deducted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('client_id', clientId),
+        'Failed marking inventory deducted'
+      );
+      addNotification('تم خصم المواد المستخدمة من المخزون.');
+      await loadInventory();
+      await loadCases();
+    }
+
     function renderInventory() {
       $('#inventoryTable').innerHTML = state.inventory.map(i => {
         const low = Number(i.qty) <= Number(i.min);
@@ -1711,6 +1849,10 @@
     }
 
     async function saveInventory() {
+      if (state.currentUser?.role !== 'admin') {
+        toast('إضافة الكميات للمخزون متاحة للأدمن فقط.', 'warn');
+        return;
+      }
       const payload = {
         item_name: $('#invName').value.trim(),
         qty: Number($('#invQty').value || 0),
@@ -1722,10 +1864,28 @@
         return;
       }
       try {
-        await queryOrThrow(supabase.from('inventory').insert([payload]), 'Failed saving inventory');
-        addNotification(`تمت إضافة صنف جديد للمخزون: ${payload.item_name}`);
+        const existing = state.inventory.find(i => i.name === payload.item_name);
+        if (existing) {
+          await queryOrThrow(
+            supabase.from('inventory').update({
+              qty: Number(existing.qty || 0) + payload.qty,
+              min_qty: payload.min_qty || existing.min,
+              notes: payload.notes || existing.notes || ''
+            }).eq('id', existing.id),
+            'Failed updating inventory qty'
+          );
+          addNotification(`تمت زيادة كمية الصنف ${payload.item_name}.`);
+        } else {
+          await queryOrThrow(supabase.from('inventory').insert([payload]), 'Failed saving inventory');
+          addNotification(`تمت إضافة صنف جديد للمخزون: ${payload.item_name}`);
+        }
         await loadInventory();
         renderInventory();
+        renderCaseInventoryAvailable();
+        $('#invName').value = '';
+        $('#invQty').value = '';
+        $('#invMin').value = '';
+        $('#invNotes').value = '';
       } catch (err) {
         console.error(err);
         toast('فشل حفظ الصنف.', 'warn');
@@ -1782,6 +1942,8 @@
       renderBookingsTable();
       renderTeam();
       renderInventory();
+      renderCaseInventoryAvailable();
+      renderCaseUsageTable();
       renderUsers();
       fillCaseClientData();
     }
@@ -1820,6 +1982,7 @@
       $('#saveCaseBtn').onclick = saveCase;
       $('#sendToReceptionBtn').onclick = sendCaseToReception;
       $('#caseAttachments').onchange = uploadCaseAttachments;
+      if ($('#addInventoryUsageBtn')) $('#addInventoryUsageBtn').onclick = addInventoryUsage;
 
       $('#saveInventoryBtn').onclick = saveInventory;
       $('#saveUserBtn').onclick = saveUser;
