@@ -118,6 +118,7 @@
     .topbar p{margin:6px 0 0;color:var(--muted)}
     .top-actions{display:flex;gap:10px;flex-wrap:wrap}
     .chip{padding:11px 14px;border-radius:16px;background:#fafcff;border:1px solid var(--line);color:#5d738d;font-size:13px;font-weight:700}
+    .chip.clickable{cursor:pointer}
 
     .hero-dashboard{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
     .card,.panel{background:#ffffff;border:1px solid #d9e3ef;border-radius:30px;box-shadow:var(--shadow-md)}
@@ -281,7 +282,7 @@
             <p id="headerDesc">الاستقبال يرسل الحالة لأخصائي محدد، ثم تعود بعد الاعتماد لإتمام الحجز.</p>
           </div>
           <div class="top-actions">
-            <div class="chip" id="notifChip">🔔 0 إشعارات</div>
+            <div class="chip clickable" id="notifChip">🔔 0 إشعارات</div>
             <div class="chip" id="dateChip">📅 -</div>
             <div class="chip" id="timeChip">🕒 -</div>
             <div class="chip" id="roleChip">-</div>
@@ -353,7 +354,7 @@
                 <div class="field"><label>المدينة</label><input id="clientCity" type="text" placeholder="المدينة" /></div>
                 <div class="field"><label>الهوية</label><input id="clientIdno" type="text" placeholder="رقم الهوية" /></div>
                 <div class="field"><label>تاريخ الميلاد</label><input id="clientBirth" type="date" /></div>
-                <div class="field"><label>مصدر العميل</label><select id="clientSource"><option>انستغرام</option><option>سناب</option><option>تيك توك</option><option>توصية</option><option>مرور</option></select></div>
+                <div class="field"><label>مصدر العميل</label><select id="clientSource"><option>انستغرام</option><option>سناب</option><option>تيك توك</option><option>واتس اب</option><option>مكالمة</option><option>توصية</option><option>مرور</option></select></div>
                 <div class="field"><label>تاريخ فتح الملف</label><input id="clientOpenDate" type="date" /></div>
               </div>
               <div style="margin-top:16px"><button class="btn btn-primary" id="saveClientBtn" type="button">حفظ الملف</button></div>
@@ -385,51 +386,62 @@
             <div class="panel">
               <div class="section-title">
                 <h3>الحجوزات والتحويل للأخصائي</h3>
-                <span>الاستقبال يحدد الأخصائي ويرسل الحالة له، وبعد اعتماد الخطة يعود الحجز للاستقبال</span>
+                <span>الاستقبال يرى كل العملاء وكل المواعيد، ويرسل الحالة للأخصائي فقط عند الحاجة</span>
               </div>
               <div class="form-grid">
-                <div class="field"><label>العميل / الحالة</label><select id="bookCase"></select></div>
+                <div class="field"><label>العميل</label><select id="bookCase"></select></div>
                 <div class="field"><label>إسناد إلى أخصائي</label><select id="assignSpecialist"></select></div>
-                <div class="field"><label>العميل</label><input id="bookClientNameView" type="text" readonly /></div>
+                <div class="field"><label>اسم العميل</label><input id="bookClientNameView" type="text" readonly /></div>
                 <div class="field"><label>التشخيص</label><input id="bookDiagnosisView" type="text" readonly /></div>
                 <div class="field"><label>الأخصائي</label><input id="bookSpecialistView" type="text" readonly /></div>
                 <div class="field"><label>نوع الجلسة</label><select id="bookSessionType"><option>شبكية</option><option>شامات</option><option>تكثيف</option><option>تاج</option><option>صلع</option><option>شنب</option><option>دقن</option><option>حواجب</option></select></div>
-                <div class="field"><label>نوع الخدمة</label><select id="bookService"><option>جلسة أولى</option><option>ثانية</option><option>ثالثة</option><option>رابعة</option></select></div>
+                <div class="field"><label>نوع الخدمة</label><select id="bookService"><option>جلسة أولى</option><option>ثانية</option><option>ثالثة</option><option>رابعة</option><option>استشارة فقط</option></select></div>
                 <div class="field"><label>عدد الجلسات</label><input id="bookSessionsCountView" type="number" readonly /></div>
                 <div class="field"><label>سعر الجلسة</label><input id="bookPricePerSessionView" type="number" readonly /></div>
                 <div class="field"><label>الإجمالي</label><input id="bookTotalView" type="number" readonly /></div>
                 <div class="field"><label>المدفوع</label><input id="bookPaid" type="number" placeholder="0" /></div>
                 <div class="field"><label>المتبقي</label><input id="bookRemaining" type="number" readonly /></div>
                 <div class="field"><label>طريقة الدفع</label><select id="bookPayment"><option>شبكة</option><option>كاش</option><option>تقسيط</option></select></div>
+                <div class="field"><label>حالة الحضور</label><select id="bookAttendance"><option>بانتظار الموعد</option><option>حضر</option><option>لم يحضر</option></select></div>
+                <div class="field"><label>إرفاق إيصال الدفع</label><input id="bookPaymentReceipt" type="file" accept="image/*,.pdf" multiple /></div>
                 <div class="field"><label>التاريخ</label><input id="bookDate" type="date" /></div>
                 <div class="field"><label>الوقت</label><input id="bookTime" type="time" /></div>
                 <div class="field"><label>نوع العميل</label><select id="bookClientType"><option>جديد</option><option>جلسات قائمة</option></select></div>
                 <div class="field full"><label>ملاحظات الاستقبال</label><textarea id="bookNotes" placeholder="أدخل ملاحظات الاستقبال"></textarea></div>
               </div>
+              <div class="table-wrap" style="margin-top:14px">
+                <table>
+                  <thead>
+                    <tr><th>إيصالات الدفع المرفوعة</th><th>النوع</th><th>الرابط</th></tr>
+                  </thead>
+                  <tbody id="paymentReceiptsTable"></tbody>
+                </table>
+              </div>
               <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
                 <button class="btn btn-soft" id="sendToSpecialistBtn" type="button">إرسال للأخصائي</button>
-                <button class="btn btn-primary" id="saveBookingBtn" type="button">تأكيد الحجز بعد اعتماد الأخصائي</button>
+                <button class="btn btn-primary" id="saveBookingBtn" type="button">حفظ الحجز</button>
               </div>
             </div>
 
             <div class="panel">
               <div class="section-title">
                 <h3>مواعيد اليوم</h3>
-                <span>اختصار عملاء اليوم</span>
+                <span>عرض سريع لعملاء اليوم حسب الساعة</span>
               </div>
               <div class="toolbar">
-                <button class="btn btn-soft" id="todayPhonesBtn" type="button">عرض أرقام عملاء اليوم</button>
-                <button class="btn btn-soft" id="markExecutedBtn" type="button">تنفيذ أول موعد اليوم</button>
+                <button class="btn btn-soft" id="todayPhonesBtn" type="button">عرض عملاء اليوم</button>
+                <button class="btn btn-soft" id="markExecutedBtn" type="button">تسجيل أول موعد: حضر</button>
+                <button class="btn btn-soft" id="markNoShowBtn" type="button">تسجيل أول موعد: لم يحضر</button>
               </div>
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th></tr>
+                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>الوقت</th><th>الحضور</th><th>الحالة</th></tr>
                   </thead>
                   <tbody id="bookingsTable"></tbody>
                 </table>
               </div>
-              <div class="note">الاستقبال يستطيع اختيار أخصائي محدد وإرسال الحالة له أولًا، ثم بعد اعتماد الأخصائي تعود الحالة كجاهزة للحجز النهائي.</div>
+              <div class="note">الحجز من عند الاستقبال مباشرة، ولا تذهب الحالة للأخصائي إلا إذا ضغط الاستقبال على إرسال للأخصائي.</div>
             </div>
           </div>
         </section>
@@ -438,7 +450,7 @@
           <div class="panel">
             <div class="section-title">
               <h3>ملف الأخصائي</h3>
-              <span>الحالات المسندة من الاستقبال + تقرير الدفع + اعتماد الخطة ثم إرسالها للاستقبال</span>
+              <span>الحالات التي أرسلها الاستقبال فقط + تقرير الدفع + اعتماد الخطة ثم إرسالها للاستقبال</span>
             </div>
             <div class="form-grid">
               <div class="field"><label>العميل</label><select id="caseClient"></select></div>
@@ -452,7 +464,8 @@
               <div class="field"><label>نوع الفراغ</label><select id="caseGapType"><option>وراثي</option><option>ندبات</option><option>ثعلبة</option><option>بعد زراعة</option><option>تصحيح SMP</option></select></div>
               <div class="field"><label>منطقة الفراغ</label><select id="caseArea"><option>مقدمة</option><option>وسط</option><option>تاج</option><option>لحية</option><option>حواجب</option></select></div>
               <div class="field"><label>درجة الفراغ</label><select id="caseDegree"><option>خفيف</option><option>متوسط</option><option>شديد</option></select></div>
-              <div class="field"><label>نوع الفروة</label><select id="caseScalp"><option>دهنية</option><option>جافة</option></select></div>
+              <div class="field"><label>نوع الفروة</label><select id="caseScalp"><option>دهنية</option><option>جافة</option><option>مختلطة</option></select></div>
+              <div class="field full"><label>الحالة الصحية للعميل</label><textarea id="caseHealthStatus" placeholder="مثال: يستخدم أدوية / يعالج ثعلبة / حالات صحية أخرى"></textarea></div>
               <div class="field full"><label>التشخيص</label><textarea id="caseDiagnosis" placeholder="أدخل التشخيص الطبي / التجميلي"></textarea></div>
               <div class="field"><label>سعر الجلسة</label><input id="casePrice" type="number" placeholder="0" /></div>
               <div class="field"><label>عدد الجلسات</label><input id="caseSessions" type="number" placeholder="0" /></div>
@@ -674,6 +687,7 @@
         clientId: row.client_id,
         sessionType: row.session_type,
         service: row.service_type || 'جلسة أولى',
+        attendance: row.attendance_status || 'بانتظار الموعد',
         previousSmp: row.previous_smp || 'لا',
         date: row.booking_date,
         time: String(row.booking_time || '').slice(0, 5),
@@ -695,6 +709,7 @@
         area: row.area || 'مقدمة',
         degree: row.degree || 'خفيف',
         scalp: row.scalp_type || 'دهنية',
+        healthStatus: row.health_status || '',
         notes: row.notes || '',
         diagnosis: row.diagnosis || '',
         pricePerSession: Number(row.price_per_session || 0),
@@ -883,6 +898,7 @@
         btn.style.display = show ? 'flex' : 'none';
         btn.classList.remove('active');
       });
+      $('#quickClientBtn').style.display = role === 'specialist' ? 'none' : 'inline-flex';
       const first = $$('#menuNav button').find(btn => btn.style.display !== 'none');
       if (first) {
         first.classList.add('active');
@@ -913,6 +929,24 @@
         $('#headerDesc').textContent = 'واجهة أكثر قربًا من منتج عالمي قابل للتوسع.';
       }
     }
+
+    function showNotifications() {
+      if (!state.notifications.length) {
+        modal('الإشعارات', 'لا توجد إشعارات حاليًا.', [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+        return;
+      }
+      state.notifications = state.notifications.map(n => ({ ...n, unread: false }));
+      const html = state.notifications.map(n => `• ${n.text}`).join('<br>');
+      renderHeader();
+      modal('الإشعارات', html, [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+    }
+
+    function attendanceBadge(attendance) {
+      if (attendance === 'حضر') return '<span class="badge ok">حضر</span>';
+      if (attendance === 'لم يحضر') return '<span class="badge danger">لم يحضر</span>';
+      return '<span class="badge draft">بانتظار</span>';
+    }
+
 
     function totalSessions(clientId) { return state.bookings.filter(b => b.clientId === clientId).length; }
     function executedSessions(clientId) { return state.bookings.filter(b => b.clientId === clientId && b.status === 'منفذ').length; }
@@ -1097,6 +1131,19 @@
       `).join('') || `<tr><td colspan="3">لا توجد مرفقات</td></tr>`;
     }
 
+    function renderPaymentReceiptsTable(clientId) {
+      const rows = state.attachments.filter(a => a.clientId === clientId && String(a.uploadedBy || '').includes('استقبال') && String(a.fileName || '').startsWith('receipt-'));
+      const table = $('#paymentReceiptsTable');
+      if (!table) return;
+      table.innerHTML = rows.map(a => `
+        <tr>
+          <td>${a.fileName.replace(/^receipt-\d+-/, '')}</td>
+          <td>${a.fileType || '-'}</td>
+          <td>${a.fileUrl ? `<a href="${a.fileUrl}" target="_blank">فتح الإيصال</a>` : '-'}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="3">لا توجد إيصالات مرفوعة</td></tr>`;
+    }
+
     function fillCaseClientData() {
       const select = $('#caseClient');
       if (!select) return;
@@ -1127,6 +1174,7 @@
         $('#caseArea').value = 'مقدمة';
         $('#caseDegree').value = 'خفيف';
         $('#caseScalp').value = 'دهنية';
+        $('#caseHealthStatus').value = '';
         $('#caseNotes').value = '';
         $('#caseDiagnosis').value = '';
         $('#casePrice').value = 0;
@@ -1152,6 +1200,7 @@
       $('#caseArea').value = c.area || 'مقدمة';
       $('#caseDegree').value = c.degree || 'خفيف';
       $('#caseScalp').value = c.scalp || 'دهنية';
+      $('#caseHealthStatus').value = c.healthStatus || '';
       $('#caseNotes').value = c.notes || '';
       $('#caseDiagnosis').value = c.diagnosis || '';
       $('#casePrice').value = c.pricePerSession || 0;
@@ -1175,6 +1224,7 @@
         area: $('#caseArea').value,
         degree: $('#caseDegree').value,
         scalp_type: $('#caseScalp').value,
+        health_status: $('#caseHealthStatus').value.trim(),
         notes: $('#caseNotes').value.trim(),
         diagnosis: $('#caseDiagnosis').value.trim(),
         price_per_session: Number($('#casePrice').value || 0),
@@ -1294,41 +1344,18 @@
       const select = $('#bookCase');
       if (!select) return;
 
-      const readyForBooking = Object.values(state.cases)
-        .filter(c => c.planStatus === 'pending_booking')
-        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
-
-      const sentToSpecialist = Object.values(state.cases)
-        .filter(c => c.planStatus === 'pending_specialist')
-        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
-
-      const clientsWithoutCase = state.clients
-        .filter(client => !state.cases[client.id])
-        .map(client => ({ clientId: client.id, diagnosis: '', totalPrice: 0, assignedSpecialistName: '', planStatus: 'draft' }))
-        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
-
-      const options = [
-        ...readyForBooking,
-        ...sentToSpecialist,
-        ...clientsWithoutCase
-      ];
-
-      const seen = new Set();
-      const uniqueOptions = options.filter(c => {
-        if (seen.has(c.clientId)) return false;
-        seen.add(c.clientId);
-        return true;
-      });
-
-      select.innerHTML = uniqueOptions.map(c => {
-        const client = state.clients.find(x => x.id === c.clientId);
-        const label = c.planStatus === 'pending_booking'
-          ? 'جاهزة للحجز'
-          : c.planStatus === 'pending_specialist'
-            ? 'مرسلة للأخصائي'
-            : 'عميل جديد';
-        return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${label}</option>`;
-      }).join('') || `<option value="">لا توجد حالات أو عملاء متاحون</option>`;
+      const options = [...state.clients].sort((a, b) => (b.id || 0) - (a.id || 0));
+      select.innerHTML = options.map(client => {
+        const caseRow = state.cases[client.id];
+        const label = caseRow?.planStatus === 'pending_specialist'
+          ? 'مرسلة للأخصائي'
+          : caseRow?.planStatus === 'pending_booking'
+            ? 'معتمدة من الأخصائي'
+            : caseRow?.planStatus === 'booked'
+              ? 'لديه خطة سابقة'
+              : 'بدون إرسال';
+        return `<option value="${client.id}">${client.name} — ${label}</option>`;
+      }).join('') || `<option value="">لا يوجد عملاء</option>`;
 
       fillSpecialistSelect();
       fillBookingCaseDetails();
@@ -1344,6 +1371,8 @@
       $('#bookSessionsCountView').value = c?.sessionsCount || 0;
       $('#bookPricePerSessionView').value = c?.pricePerSession || 0;
       $('#bookTotalView').value = c?.totalPrice || 0;
+      $('#bookService').value = $('#bookService').value || 'جلسة أولى';
+      $('#bookAttendance').value = 'بانتظار الموعد';
 
       const specialistSelect = $('#assignSpecialist');
       if (specialistSelect) {
@@ -1358,10 +1387,13 @@
         $('#bookPayment').value = c.paymentReportMethod;
       }
 
-      if (c?.paymentReportNotes && !$('#bookNotes').value) {
+      if (c?.paymentReportNotes) {
         $('#bookNotes').value = c.paymentReportNotes;
+      } else {
+        $('#bookNotes').value = '';
       }
 
+      renderPaymentReceiptsTable(clientId);
       const paid = Number($('#bookPaid').value || c?.paymentReportAmount || 0);
       $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
     }
@@ -1376,10 +1408,58 @@
       $('#bookPaid').value = '';
       $('#bookRemaining').value = '';
       $('#bookNotes').value = '';
+      $('#bookAttendance').value = 'بانتظار الموعد';
       $('#bookDate').value = todayStr();
       $('#bookTime').value = '';
       if ($('#assignSpecialist')) $('#assignSpecialist').value = '';
+      if ($('#bookPaymentReceipt')) $('#bookPaymentReceipt').value = '';
+      renderPaymentReceiptsTable(0);
       fillBookingCases();
+    }
+
+    async function uploadReceptionPaymentReceipts(clientId) {
+      const input = $('#bookPaymentReceipt');
+      const files = Array.from(input?.files || []);
+      if (!clientId || !files.length) return true;
+
+      const caseRow = state.cases[clientId];
+      if (!caseRow?.id) {
+        toast('تعذر ربط إيصال الدفع بالحالة.', 'warn');
+        return false;
+      }
+
+      for (const file of files) {
+        try {
+          const safeName = `receipt-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+          const filePath = `client-${clientId}/case-${caseRow.id}/receipts/${safeName}`;
+          const { error: uploadError } = await supabase.storage.from('case-files').upload(filePath, file, { upsert: true });
+          if (uploadError) throw uploadError;
+
+          let fileUrl = '';
+          const { data: signed, error: signedError } = await supabase.storage.from('case-files').createSignedUrl(filePath, 60 * 60 * 24 * 7);
+          if (!signedError && signed?.signedUrl) fileUrl = signed.signedUrl;
+
+          await queryOrThrow(
+            supabase.from('case_attachments').insert([{
+              case_id: caseRow.id,
+              client_id: clientId,
+              file_name: safeName,
+              file_path: filePath,
+              file_url: fileUrl,
+              file_type: file.type || 'payment_receipt',
+              uploaded_by: `${state.currentUser?.name || ''} - استقبال`
+            }]),
+            'Failed saving payment receipt metadata'
+          );
+        } catch (err) {
+          console.error(err);
+          toast(`فشل رفع إيصال الدفع: ${file.name}`, 'warn');
+          return false;
+        }
+      }
+
+      if (input) input.value = '';
+      return true;
     }
 
     async function sendCaseToSpecialist() {
@@ -1405,6 +1485,7 @@
         area: existing?.area || 'مقدمة',
         degree: existing?.degree || 'خفيف',
         scalp_type: existing?.scalp || 'دهنية',
+        health_status: existing?.healthStatus || '',
         notes: existing?.notes || '',
         diagnosis: existing?.diagnosis || '',
         price_per_session: Number(existing?.pricePerSession || 0),
@@ -1427,8 +1508,11 @@
           supabase.from('cases').upsert(payload, { onConflict: 'client_id' }),
           'Failed sending case to specialist'
         );
-        addNotification(`تم إرسال حالة العميل ${client.name} إلى الأخصائي ${specialist.name}.`);
         await loadCases();
+        const uploaded = await uploadReceptionPaymentReceipts(clientId);
+        if (!uploaded) return;
+        await loadAttachments();
+        addNotification(`تم إرسال حالة العميل ${client.name} إلى الأخصائي ${specialist.name}.`);
         renderAll();
       } catch (err) {
         console.error(err);
@@ -1438,12 +1522,22 @@
 
     async function saveBooking() {
       const clientId = Number($('#bookCase').value);
+      const client = state.clients.find(c => c.id === clientId);
       const caseRow = state.cases[clientId];
-      if (!clientId || !caseRow || caseRow.planStatus !== 'pending_booking') {
-        toast('لا يمكن تأكيد الحجز إلا بعد اعتماد الحالة من الأخصائي.', 'warn');
+      const selectedSpecialist = state.users.find(u => u.id == $('#assignSpecialist').value && u.role === 'specialist');
+
+      if (!clientId || !client) {
+        toast('اختر العميل أولًا.', 'warn');
         return;
       }
-      const total = Number(caseRow.totalPrice || 0);
+
+      const specialistName = caseRow?.specialistName || caseRow?.assignedSpecialistName || selectedSpecialist?.name || $('#bookSpecialistView').value || '';
+      if (!$('#bookDate').value || !$('#bookTime').value || !specialistName) {
+        toast('أكمل التاريخ والوقت والأخصائي.', 'warn');
+        return;
+      }
+
+      const total = Number(caseRow?.totalPrice || 0);
       const paid = Number($('#bookPaid').value || 0);
       const remaining = Math.max(0, total - paid);
 
@@ -1455,23 +1549,19 @@
         booking_date: $('#bookDate').value,
         booking_time: $('#bookTime').value,
         client_type: $('#bookClientType').value,
-        specialist_name: caseRow.specialistName || '',
+        specialist_name: specialistName,
         paid,
         remaining,
         payment_method: $('#bookPayment').value,
+        attendance_status: $('#bookAttendance').value,
         notes: [
-          `التشخيص: ${caseRow.diagnosis || '-'}`,
-          `عدد الجلسات: ${caseRow.sessionsCount || 0}`,
-          `سعر الجلسة: ${caseRow.pricePerSession || 0}`,
+          `التشخيص: ${caseRow?.diagnosis || '-'}`,
+          `عدد الجلسات: ${caseRow?.sessionsCount || 0}`,
+          `سعر الجلسة: ${caseRow?.pricePerSession || 0}`,
           $('#bookNotes').value.trim()
         ].filter(Boolean).join(' | '),
-        status: 'confirmed'
+        status: $('#bookAttendance').value === 'حضر' && $('#bookService').value !== 'استشارة فقط' ? 'executed' : 'confirmed'
       };
-
-      if (!b.booking_date || !b.booking_time || !b.specialist_name) {
-        toast('أكمل بيانات الحجز الأساسية.', 'warn');
-        return;
-      }
 
       try {
         const conflicts = await queryOrThrow(
@@ -1488,15 +1578,27 @@
         }
 
         await queryOrThrow(supabase.from('bookings').insert([b]), 'Failed inserting booking');
-        await queryOrThrow(
-          supabase.from('cases').update({ plan_status: 'booked', updated_at: new Date().toISOString() }).eq('client_id', clientId),
-          'Failed updating case status after booking'
-        );
-        const client = state.clients.find(c => c.id === b.client_id);
+
+        if (caseRow?.planStatus === 'pending_booking' || caseRow?.planStatus === 'pending_specialist' || caseRow?.planStatus === 'draft') {
+          await queryOrThrow(
+            supabase.from('cases').update({
+              plan_status: 'booked',
+              assigned_specialist_id: selectedSpecialist?.id || caseRow?.assignedSpecialistId || null,
+              assigned_specialist_name: selectedSpecialist?.name || caseRow?.assignedSpecialistName || '',
+              updated_at: new Date().toISOString()
+            }).eq('client_id', clientId),
+            'Failed updating case status after booking'
+          );
+        }
+
+        const uploaded = await uploadReceptionPaymentReceipts(clientId);
+        if (!uploaded) return;
+
         addNotification(`تم حجز موعد جديد للعميل ${client?.name || ''} مع ${b.specialist_name}`);
         clearBookingForm();
         await loadBookings();
         await loadCases();
+        await loadAttachments();
         renderAll();
       } catch (err) {
         console.error(err);
@@ -1518,6 +1620,7 @@
             <td>${c?.name || '-'}</td>
             <td>${caseRow.diagnosis || '-'}</td>
             <td>${b.specialist}</td>
+            <td>${b.service || '-'}</td>
             <td>${total.toLocaleString('ar-SA')} ر.س</td>
             <td>${Number(b.paid || 0).toLocaleString('ar-SA')} ر.س</td>
             <td>${Number(b.remaining || 0).toLocaleString('ar-SA')} ر.س</td>
@@ -1525,39 +1628,54 @@
             <td>${sessionBadge(caseRow, executed)}</td>
             <td>${formatDateDisplay(b.date)}</td>
             <td>${formatTime12(b.time)}</td>
+            <td>${attendanceBadge(b.attendance)}</td>
             <td>${bookingStatusBadge(b.status)}</td>
           </tr>`;
-      }).join('') || `<tr><td colspan="11">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="13">لا توجد مواعيد</td></tr>`;
     }
 
     function showTodayPhones() {
-      const todays = state.bookings.filter(b => b.date === todayStr());
+      const todays = state.bookings
+        .filter(b => b.date === todayStr())
+        .sort((a, b) => String(a.time).localeCompare(String(b.time)));
       if (!todays.length) {
         toast('لا توجد حجوزات اليوم.', 'warn');
         return;
       }
       const html = todays.map(b => {
         const c = state.clients.find(x => x.id === b.clientId);
-        return `${c?.name || '-'} — ${c?.phone || '-'}`;
+        return `${c?.name || '-'} — ${formatTime12(b.time)}`;
       }).join('<br>');
-      modal('أرقام عملاء اليوم', html, [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+      modal('عملاء اليوم', html, [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
     }
 
-    async function markExecutedFirstToday() {
-      const first = state.bookings.find(b => b.date === todayStr() && b.status === 'مؤكد');
+    async function updateFirstTodayAttendance(attendance) {
+      const first = state.bookings.find(b => b.date === todayStr() && b.attendance === 'بانتظار الموعد');
       if (!first) {
-        toast('لا يوجد موعد مؤكد اليوم لتحديثه.', 'warn');
+        toast('لا يوجد موعد اليوم بانتظار تحديث الحضور.', 'warn');
         return;
       }
+      const nextStatus = attendance === 'حضر' && first.service !== 'استشارة فقط' ? 'executed' : 'confirmed';
       try {
-        await queryOrThrow(supabase.from('bookings').update({ status: 'executed' }).eq('id', first.id), 'Failed updating booking status');
-        addNotification('تم تحديث أول موعد اليوم إلى منفذ.');
+        await queryOrThrow(
+          supabase.from('bookings').update({ attendance_status: attendance, status: nextStatus }).eq('id', first.id),
+          'Failed updating booking attendance'
+        );
+        addNotification(`تم تحديث أول موعد اليوم إلى: ${attendance}.`);
         await loadBookings();
         renderAll();
       } catch (err) {
         console.error(err);
-        toast('فشل تحديث حالة الحجز.', 'warn');
+        toast('فشل تحديث حضور الموعد.', 'warn');
       }
+    }
+
+    async function markExecutedFirstToday() {
+      return updateFirstTodayAttendance('حضر');
+    }
+
+    async function markNoShowFirstToday() {
+      return updateFirstTodayAttendance('لم يحضر');
     }
 
     function renderTeam() {
@@ -1684,10 +1802,14 @@
       $('#sendToSpecialistBtn').onclick = sendCaseToSpecialist;
       $('#todayPhonesBtn').onclick = showTodayPhones;
       $('#markExecutedBtn').onclick = markExecutedFirstToday;
+      if ($('#markNoShowBtn')) $('#markNoShowBtn').onclick = markNoShowFirstToday;
+      $('#notifChip').onclick = showNotifications;
+      $('#currentNotifications').onclick = showNotifications;
+      $('#currentNotifications').style.cursor = 'pointer';
       $('#bookCase').onchange = fillBookingCaseDetails;
       $('#assignSpecialist').onchange = () => {
         const specialist = state.users.find(u => u.id == $('#assignSpecialist').value);
-        $('#bookSpecialistView').value = specialist?.name || $('#bookSpecialistView').value;
+        $('#bookSpecialistView').value = specialist?.name || '';
       };
       $('#bookPaid').oninput = recalcBookingRemaining;
       $('#bookDate').value = todayStr();
