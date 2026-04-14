@@ -1442,6 +1442,7 @@
       const clientId = Number($('#bookCase')?.value || 0);
       const c = state.cases[clientId];
       const client = state.clients.find(x => x.id === clientId);
+
       $('#bookClientNameView').value = client?.name || '';
       $('#bookDiagnosisView').value = c?.diagnosis || '';
       $('#bookSpecialistView').value = c?.assignedSpecialistName || c?.specialistName || '';
@@ -1456,8 +1457,15 @@
         specialistSelect.value = c?.assignedSpecialistId ? String(c.assignedSpecialistId) : '';
       }
 
-      if (c?.paymentReportAmount) {
-        $('#bookPaid').value = c.paymentReportAmount;
+      // تصفير الحقول أولًا حتى لا تنتقل قيمة العميل السابق للعميل الحالي
+      $('#bookPaid').value = '';
+      $('#bookRemaining').value = '';
+      $('#bookPayment').value = 'شبكة';
+      $('#bookNotes').value = '';
+
+      // تعبئة بيانات الدفع فقط إذا كانت محفوظة للحالة الحالية
+      if (c && c.paymentReportAmount != null) {
+        $('#bookPaid').value = Number(c.paymentReportAmount || 0);
       }
 
       if (c?.paymentReportMethod) {
@@ -1466,12 +1474,10 @@
 
       if (c?.paymentReportNotes) {
         $('#bookNotes').value = c.paymentReportNotes;
-      } else {
-        $('#bookNotes').value = '';
       }
 
       renderPaymentReceiptsTable(clientId);
-      const paid = Number($('#bookPaid').value || c?.paymentReportAmount || 0);
+      const paid = Number($('#bookPaid').value || 0);
       $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
     }
 
