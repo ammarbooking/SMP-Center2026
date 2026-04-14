@@ -438,8 +438,7 @@
             </div>
             <div class="form-grid">
               <div class="field"><label>العميل</label><select id="caseClient"></select></div>
-              <div class="field"><label>الأخصائي</label><select id="caseSpecialist"></select></div>
-              <div class="field"><label>نوع الجلسة</label><select id="caseSessionType"><option>شبكية</option><option>شامات</option><option>تكثيف</option><option>تاج</option><option>صلع</option><option>شنب</option><option>دقن</option><option>حواجب</option></select></div>
+              <div class="field"><label>نوع الجلسة</label><input id="caseSessionType" type="text" readonly /></div>
               <div class="field"><label>الجلسات المنفذة</label><input id="caseDone" type="number" readonly /></div>
               <div class="field"><label>الجلسات المتبقية</label><input id="caseRemain" type="number" readonly /></div>
               <div class="field"><label>نوع الفراغ</label><select id="caseGapType"><option>وراثي</option><option>ندبات</option><option>ثعلبة</option><option>بعد زراعة</option><option>تصحيح SMP</option></select></div>
@@ -578,6 +577,27 @@
 
     function roleLabel(role) {
       return role === 'admin' ? 'أدمن' : role === 'reception' ? 'استقبال' : 'أخصائي';
+    }
+
+    function isSpecialistUser() {
+      return state.currentUser?.role === 'specialist';
+    }
+
+    function canCurrentSpecialistAccessCase(caseRow) {
+      if (!isSpecialistUser()) return true;
+      if (!caseRow) return true;
+      if (!caseRow.specialistId) return true;
+      return Number(caseRow.specialistId) === Number(state.currentUser.id);
+    }
+
+    function getVisibleClientsForSpecialist() {
+      if (!isSpecialistUser()) return state.clients;
+      return state.clients.filter(client => {
+        const c = state.cases[client.id];
+        if (!c) return true;
+        if (!c.specialistId) return true;
+        return Number(c.specialistId) === Number(state.currentUser.id);
+      });
     }
 
     function formatDateDisplay(dateStr) {
@@ -967,7 +987,8 @@
 
     function renderClientsTable(filter = '') {
       const f = filter.trim();
-      const rows = state.clients.filter(c => !f || c.name.includes(f) || c.phone.includes(f));
+      const baseClients = state.currentUser?.role === 'specialist' ? getVisibleClientsForSpecialist() : state.clients;
+      const rows = baseClients.filter(c => !f || c.name.includes(f) || c.phone.includes(f));
       $('#clientsTable').innerHTML = rows.map(c => `
         <tr>
           <td>${c.name}</td>
@@ -1021,8 +1042,11 @@
     }
 
     function fillClientSelects() {
-      const clientsOptions = state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-      if ($('#caseClient')) $('#caseClient').innerHTML = clientsOptions;
+      const visibleClients = getVisibleClientsForSpecialist();
+      const clientsOptions = visibleClients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      if ($('#caseClient')) {
+        $('#caseClient').innerHTML = clientsOptions || '<option value="">لا توجد حالات متاحة</option>';
+      }
     }
 
     function caseStatusLabel(status) {
@@ -1045,37 +1069,6 @@
       return total;
     }
 
-
-    function parseCaseMetaNotes(raw = '') {
-      const text = String(raw || '');
-      const sessionTypeMatch = text.match(/\[SESSION_TYPE=([^\]]+)\]/);
-      const noteText = text
-        .replace(/\[SESSION_TYPE=[^\]]+\]\s*/g, '')
-        .trim();
-      return {
-        sessionType: sessionTypeMatch ? sessionTypeMatch[1] : '',
-        noteText
-      };
-    }
-
-    function buildCaseNotesWithMeta(noteText, sessionType) {
-      const cleanNote = String(noteText || '').trim();
-      const cleanSession = String(sessionType || '').trim();
-      return cleanSession
-        ? `[SESSION_TYPE=${cleanSession}]\n${cleanNote}`.trim()
-        : cleanNote;
-    }
-
-    function fillSpecialists() {
-      const select = $('#caseSpecialist');
-      if (!select) return;
-      const specialists = state.users.filter(u => u.role === 'specialist');
-      select.innerHTML = specialists.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-      if (!select.value && specialists.length) {
-        select.value = String(specialists[0].id);
-      }
-    }
-
     function renderAttachmentsTable(clientId) {
       const caseRow = state.cases[clientId];
       const rows = state.attachments.filter(a => a.clientId === clientId && (!caseRow?.id || a.caseId === caseRow.id || a.caseId));
@@ -1089,33 +1082,56 @@
     }
 
     function fillCaseClientData() {
-      const fallbackId = state.clients[0]?.id || 0;
+      const visibleClients = getVisibleClientsForSpecialist();
+      const fallbackId = visibleClients[0]?.id || 0;
       const clientId = Number($('#caseClient')?.value || fallbackId);
-      if (!clientId) return;
+      if (!clientId) {
+        $('#caseSessionType').value = '';
+        $('#caseDone').value = 0;
+        $('#caseRemain').value = 0;
+        $('#caseGapType').value = 'وراثي';
+        $('#caseArea').value = 'مقدمة';
+        $('#caseDegree').value = 'خفيف';
+        $('#caseScalp').value = 'دهنية';
+        $('#caseNotes').value = '';
+        $('#caseDiagnosis').value = '';
+        $('#casePrice').value = 0;
+        $('#caseSessions').value = 0;
+        $('#caseTotal').value = 0;
+        $('#casePlanStatusView').value = 'مسودة';
+        $('#attachmentsTable').innerHTML = `<tr><td colspan="3">لا توجد مرفقات</td></tr>`;
+        return;
+      }
+
       $('#caseClient').value = String(clientId);
-      fillSpecialists();
+      const c = state.cases[clientId] || null;
+
+      if (!canCurrentSpecialistAccessCase(c)) {
+        toast('هذه الحالة مخصصة لأخصائي آخر.', 'warn');
+        const firstAllowed = visibleClients[0]?.id || 0;
+        if (firstAllowed && firstAllowed !== clientId) {
+          $('#caseClient').value = String(firstAllowed);
+          return fillCaseClientData();
+        }
+        return;
+      }
+
       const bookings = state.bookings.filter(b => b.clientId === clientId);
       const latest = bookings[bookings.length - 1];
-      const c = state.cases[clientId] || {};
-      const parsed = parseCaseMetaNotes(c.notes || '');
-      $('#caseSessionType').value = parsed.sessionType || latest?.sessionType || 'شبكية';
+      $('#caseSessionType').value = latest?.sessionType || '';
       $('#caseDone').value = executedSessions(clientId);
       $('#caseRemain').value = clientRemainingSessions(clientId);
-      $('#caseGapType').value = c.gapType || 'وراثي';
-      $('#caseArea').value = c.area || 'مقدمة';
-      $('#caseDegree').value = c.degree || 'خفيف';
-      $('#caseScalp').value = c.scalp || 'دهنية';
-      $('#caseNotes').value = parsed.noteText || '';
-      $('#caseDiagnosis').value = c.diagnosis || '';
-      $('#casePrice').value = c.pricePerSession || 0;
-      $('#caseSessions').value = c.sessionsCount || 0;
-      $('#caseTotal').value = c.totalPrice || 0;
-      $('#casePlanStatusView').value = caseStatusLabel(c.planStatus || 'draft');
-      if (c.specialistId && $('#caseSpecialist')) {
-        $('#caseSpecialist').value = String(c.specialistId);
-      } else if (state.currentUser?.role === 'specialist' && $('#caseSpecialist')) {
-        $('#caseSpecialist').value = String(state.currentUser.id);
-      }
+      const row = c || {};
+      $('#caseGapType').value = row.gapType || 'وراثي';
+      $('#caseArea').value = row.area || 'مقدمة';
+      $('#caseDegree').value = row.degree || 'خفيف';
+      $('#caseScalp').value = row.scalp || 'دهنية';
+      $('#caseNotes').value = row.notes || '';
+      $('#caseDiagnosis').value = row.diagnosis || '';
+      $('#casePrice').value = row.pricePerSession || 0;
+      $('#caseSessions').value = row.sessionsCount || 0;
+      $('#caseTotal').value = row.totalPrice || 0;
+      $('#casePlanStatusView').value = caseStatusLabel(row.planStatus || 'draft');
       renderAttachmentsTable(clientId);
     }
 
@@ -1125,24 +1141,31 @@
         toast('اختر عميلًا أولاً.', 'warn');
         return false;
       }
-      const specialistId = Number($('#caseSpecialist')?.value || 0);
-      const specialist = state.users.find(u => u.id === specialistId);
       const total = calcCaseTotal();
       const existing = state.cases[clientId];
+
+      if (isSpecialistUser() && existing?.specialistId && Number(existing.specialistId) !== Number(state.currentUser.id)) {
+        toast('لا يمكنك تعديل حالة مخصصة لأخصائي آخر.', 'warn');
+        return false;
+      }
+
+      const assignedSpecialistId = existing?.specialistId || state.currentUser?.id || null;
+      const assignedSpecialistName = existing?.specialistName || state.currentUser?.name || '';
+
       const payload = {
         client_id: clientId,
         gap_type: $('#caseGapType').value,
         area: $('#caseArea').value,
         degree: $('#caseDegree').value,
         scalp_type: $('#caseScalp').value,
-        notes: buildCaseNotesWithMeta($('#caseNotes').value.trim(), $('#caseSessionType').value),
+        notes: $('#caseNotes').value.trim(),
         diagnosis: $('#caseDiagnosis').value.trim(),
         price_per_session: Number($('#casePrice').value || 0),
         sessions_count: Number($('#caseSessions').value || 0),
         total_price: total,
         plan_status: existing?.planStatus || 'draft',
-        specialist_name: specialist?.name || state.currentUser?.name || '',
-        specialist_id: specialist?.id || state.currentUser?.id || null,
+        specialist_name: assignedSpecialistName,
+        specialist_id: assignedSpecialistId,
         updated_at: new Date().toISOString()
       };
       try {
@@ -1166,6 +1189,11 @@
       if (!clientId || !files.length) return;
 
       const caseRow = state.cases[clientId];
+      if (isSpecialistUser() && caseRow?.specialistId && Number(caseRow.specialistId) !== Number(state.currentUser.id)) {
+        toast('لا يمكنك رفع مرفقات على حالة مخصصة لأخصائي آخر.', 'warn');
+        $('#caseAttachments').value = '';
+        return;
+      }
       if (!caseRow?.id) {
         toast('احفظ الحالة أولًا قبل رفع المرفقات.', 'warn');
         $('#caseAttachments').value = '';
