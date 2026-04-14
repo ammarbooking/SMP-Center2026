@@ -434,11 +434,13 @@
                 <button class="btn btn-soft" id="todayPhonesBtn" type="button">عرض عملاء اليوم</button>
                 <button class="btn btn-soft" id="markExecutedBtn" type="button">تسجيل أول موعد: حضر</button>
                 <button class="btn btn-soft" id="markNoShowBtn" type="button">تسجيل أول موعد: لم يحضر</button>
+                <button class="btn btn-soft" id="startFirstSessionBtn" type="button">بدء أول جلسة اليوم</button>
+                <button class="btn btn-soft" id="endCurrentSessionBtn" type="button">إنهاء الجلسة الجارية</button>
               </div>
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة</th><th>الحضور</th><th>الحالة</th></tr>
+                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة المجدولة</th><th>البداية الفعلية</th><th>النهاية الفعلية</th><th>المدة الفعلية</th><th>فرق البداية</th><th>الحضور</th><th>الحالة</th><th>الإجراءات</th></tr>
                   </thead>
                   <tbody id="bookingsTable"></tbody>
                 </table>
@@ -641,10 +643,38 @@
 
     function formatTime12(t) {
       if (!t) return '-';
-      const [h, m] = String(t).slice(0, 5).split(':').map(Number);
+      const value = String(t);
+      const normalized = value.includes('T') ? value.slice(11, 16) : value.slice(0, 5);
+      const [h, m] = normalized.split(':').map(Number);
       const d = new Date();
       d.setHours(h || 0, m || 0, 0, 0);
       return d.toLocaleTimeString('ar-SA', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function actualTimeValue(dateStr = todayStr()) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      return `${y}-${mo}-${d}T${hh}:${mm}:${ss}`;
+    }
+
+    function minutesDiff(startIso, endIso) {
+      if (!startIso || !endIso) return 0;
+      const diff = Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+      return diff > 0 ? diff : 0;
+    }
+
+    function compareStartDelay(dateStr, scheduledTime, actualStartIso) {
+      if (!dateStr || !scheduledTime || !actualStartIso) return '-';
+      const scheduled = new Date(`${dateStr}T${String(scheduledTime).slice(0,5)}:00`);
+      const actual = new Date(actualStartIso);
+      const diff = Math.round((actual - scheduled) / 60000);
+      if (diff === 0) return 'في الموعد';
+      return diff > 0 ? `متأخر ${diff} د` : `أبكر ${Math.abs(diff)} د`;
     }
 
     function toast(text, type = 'success') {
@@ -726,13 +756,16 @@
         time: String(row.booking_time || '').slice(0, 5),
         endTime: String(row.booking_end_time || '').slice(0, 5),
         durationMinutes: Number(row.duration_minutes || 0),
+        actualStartTime: row.actual_start_time || null,
+        actualEndTime: row.actual_end_time || null,
+        actualDurationMinutes: Number(row.actual_duration_minutes || 0),
         clientType: row.client_type || 'جديد',
         specialist: row.specialist_name || '',
         paid: Number(row.paid || 0),
         remaining: Number(row.remaining || 0),
         payment: row.payment_method || 'شبكة',
         notes: row.notes || '',
-        status: row.status === 'confirmed' ? 'مؤكد' : row.status === 'executed' ? 'منفذ' : row.status === 'cancelled' ? 'ملغي' : (row.status || 'مؤكد')
+        status: row.status === 'confirmed' ? 'مؤكد' : row.status === 'executed' ? 'منفذ' : row.status === 'in_progress' ? 'قيد التنفيذ' : row.status === 'cancelled' ? 'ملغي' : (row.status || 'مؤكد')
       };
     }
 
@@ -1134,6 +1167,7 @@
 
     function bookingStatusBadge(status) {
       if (status === 'منفذ') return '<span class="badge ok">منفذ</span>';
+      if (status === 'قيد التنفيذ') return '<span class="badge warn">قيد التنفيذ</span>';
       if (status === 'ملغي') return '<span class="badge danger">ملغي</span>';
       return '<span class="badge draft">مؤكد</span>';
     }
@@ -1692,6 +1726,8 @@
         const executed = executedSessions(b.clientId);
         const totalSessions = Number(caseRow.sessionsCount || 0);
         const remainingSessions = Math.max(0, totalSessions - executed);
+        const startDisabled = b.status === 'منفذ' || b.status === 'ملغي' || b.attendance === 'لم يحضر' || !!b.actualStartTime;
+        const endDisabled = !b.actualStartTime || !!b.actualEndTime || b.status === 'ملغي';
         return `
           <tr>
             <td>${c?.name || '-'}</td>
@@ -1707,13 +1743,30 @@
             <td>${formatTime12(b.time)}</td>
             <td>${formatTime12(b.endTime)}</td>
             <td>${b.durationMinutes ? `${b.durationMinutes} دقيقة` : '-'}</td>
+            <td>${formatTime12(b.actualStartTime)}</td>
+            <td>${formatTime12(b.actualEndTime)}</td>
+            <td>${b.actualDurationMinutes ? `${b.actualDurationMinutes} دقيقة` : '-'}</td>
+            <td>${compareStartDelay(b.date, b.time, b.actualStartTime)}</td>
             <td>${attendanceBadge(b.attendance)}</td>
             <td>${bookingStatusBadge(b.status)}</td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-soft" data-attend-booking="${b.id}" data-attendance="حضر" type="button">حضر</button>
+                <button class="btn btn-soft" data-attend-booking="${b.id}" data-attendance="لم يحضر" type="button">لم يحضر</button>
+                <button class="btn btn-outline" data-start-booking="${b.id}" type="button" ${startDisabled ? 'disabled' : ''}>بدء</button>
+                <button class="btn btn-primary" data-end-booking="${b.id}" type="button" ${endDisabled ? 'disabled' : ''}>إنهاء</button>
+              </div>
+            </td>
           </tr>`;
-      }).join('') || `<tr><td colspan="15">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="20">لا توجد مواعيد</td></tr>`;
+
+      $$('[data-attend-booking]').forEach(btn => btn.onclick = () => updateBookingAttendance(Number(btn.dataset.attendBooking), btn.dataset.attendance));
+      $$('[data-start-booking]').forEach(btn => btn.onclick = () => startBookingSession(Number(btn.dataset.startBooking)));
+      $$('[data-end-booking]').forEach(btn => btn.onclick = () => endBookingSession(Number(btn.dataset.endBooking)));
     }
 
     function showTodayPhones() {
+
       const todays = state.bookings
         .filter(b => b.date === todayStr())
         .sort((a, b) => String(a.time).localeCompare(String(b.time)));
@@ -1734,13 +1787,22 @@
         toast('لا يوجد موعد اليوم بانتظار تحديث الحضور.', 'warn');
         return;
       }
-      const nextStatus = attendance === 'حضر' && first.service !== 'استشارة فقط' ? 'executed' : 'confirmed';
+      return updateBookingAttendance(first.id, attendance);
+    }
+
+    async function updateBookingAttendance(bookingId, attendance) {
+      const booking = state.bookings.find(b => b.id === bookingId);
+      if (!booking) {
+        toast('الموعد غير موجود.', 'warn');
+        return;
+      }
+      const nextStatus = attendance === 'لم يحضر' ? 'cancelled' : (booking.actualEndTime ? 'executed' : booking.actualStartTime ? 'in_progress' : 'confirmed');
       try {
         await queryOrThrow(
-          supabase.from('bookings').update({ attendance_status: attendance, status: nextStatus }).eq('id', first.id),
+          supabase.from('bookings').update({ attendance_status: attendance, status: nextStatus }).eq('id', bookingId),
           'Failed updating booking attendance'
         );
-        addNotification(`تم تحديث أول موعد اليوم إلى: ${attendance}.`);
+        addNotification(`تم تحديث حضور الموعد إلى: ${attendance}.`);
         await loadBookings();
         renderAll();
       } catch (err) {
@@ -1749,15 +1811,102 @@
       }
     }
 
+    async function startBookingSession(bookingId) {
+      const booking = state.bookings.find(b => b.id === bookingId);
+      if (!booking) {
+        toast('الموعد غير موجود.', 'warn');
+        return;
+      }
+      if (booking.actualStartTime) {
+        toast('تم تسجيل بداية الجلسة بالفعل.', 'warn');
+        return;
+      }
+      try {
+        await queryOrThrow(
+          supabase.from('bookings').update({
+            actual_start_time: actualTimeValue(booking.date),
+            attendance_status: 'حضر',
+            status: 'in_progress'
+          }).eq('id', bookingId),
+          'Failed starting booking session'
+        );
+        addNotification(`تم تسجيل بداية الجلسة للعميل.`);
+        await loadBookings();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل تسجيل بداية الجلسة.', 'warn');
+      }
+    }
+
+    async function endBookingSession(bookingId) {
+      const booking = state.bookings.find(b => b.id === bookingId);
+      if (!booking) {
+        toast('الموعد غير موجود.', 'warn');
+        return;
+      }
+      if (!booking.actualStartTime) {
+        toast('ابدأ الجلسة أولاً.', 'warn');
+        return;
+      }
+      if (booking.actualEndTime) {
+        toast('تم تسجيل نهاية الجلسة بالفعل.', 'warn');
+        return;
+      }
+      const endIso = actualTimeValue(booking.date);
+      const actualDuration = minutesDiff(booking.actualStartTime, endIso);
+      try {
+        await queryOrThrow(
+          supabase.from('bookings').update({
+            actual_end_time: endIso,
+            actual_duration_minutes: actualDuration,
+            attendance_status: booking.attendance === 'لم يحضر' ? 'لم يحضر' : 'حضر',
+            status: 'executed'
+          }).eq('id', bookingId),
+          'Failed ending booking session'
+        );
+        addNotification(`تم تسجيل نهاية الجلسة بمدة فعلية ${actualDuration} دقيقة.`);
+        await loadBookings();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل تسجيل نهاية الجلسة.', 'warn');
+      }
+    }
+
     async function markExecutedFirstToday() {
-      return updateFirstTodayAttendance('حضر');
+      const first = state.bookings.find(b => b.date === todayStr() && b.attendance === 'بانتظار الموعد');
+      if (!first) {
+        toast('لا يوجد موعد اليوم بانتظار التحديث.', 'warn');
+        return;
+      }
+      return updateBookingAttendance(first.id, 'حضر');
     }
 
     async function markNoShowFirstToday() {
       return updateFirstTodayAttendance('لم يحضر');
     }
 
+    async function startFirstSessionToday() {
+      const first = state.bookings.find(b => b.date === todayStr() && b.attendance !== 'لم يحضر' && !b.actualStartTime);
+      if (!first) {
+        toast('لا توجد جلسة اليوم تحتاج تسجيل بداية.', 'warn');
+        return;
+      }
+      return startBookingSession(first.id);
+    }
+
+    async function endCurrentSessionToday() {
+      const current = state.bookings.find(b => b.date === todayStr() && b.actualStartTime && !b.actualEndTime && b.status !== 'ملغي');
+      if (!current) {
+        toast('لا توجد جلسة جارية تحتاج تسجيل نهاية.', 'warn');
+        return;
+      }
+      return endBookingSession(current.id);
+    }
+
     function renderTeam() {
+
       const grouped = {};
       state.bookings.forEach(b => {
         const key = b.specialist || 'غير محدد';
@@ -2005,6 +2154,8 @@
       $('#todayPhonesBtn').onclick = showTodayPhones;
       $('#markExecutedBtn').onclick = markExecutedFirstToday;
       if ($('#markNoShowBtn')) $('#markNoShowBtn').onclick = markNoShowFirstToday;
+      if ($('#startFirstSessionBtn')) $('#startFirstSessionBtn').onclick = startFirstSessionToday;
+      if ($('#endCurrentSessionBtn')) $('#endCurrentSessionBtn').onclick = endCurrentSessionToday;
       $('#notifChip').onclick = showNotifications;
       $('#currentNotifications').onclick = showNotifications;
       $('#currentNotifications').style.cursor = 'pointer';
