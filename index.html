@@ -1270,6 +1270,42 @@
       `).join('') || `<tr><td colspan="3">لا توجد إيصالات مرفوعة</td></tr>`;
     }
 
+    function canEditCase(caseRow) {
+      if (!state.currentUser || !caseRow) return false;
+      if (state.currentUser.role === 'admin') return true;
+      if (
+        state.currentUser.role === 'specialist' &&
+        Number(caseRow.assignedSpecialistId) === Number(state.currentUser.id)
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    function applyCasePermissions(caseRow) {
+      const editable = canEditCase(caseRow);
+      [
+        '#caseGapType',
+        '#caseArea',
+        '#caseDegree',
+        '#caseScalp',
+        '#caseHealthStatus',
+        '#caseDiagnosis',
+        '#casePrice',
+        '#caseSessions',
+        '#caseNotes',
+        '#caseAttachments',
+        '#useInventoryItem',
+        '#useInventoryQty',
+        '#addInventoryUsageBtn',
+        '#saveCaseBtn',
+        '#sendToReceptionBtn'
+      ].forEach(sel => {
+        const el = $(sel);
+        if (el) el.disabled = !editable;
+      });
+    }
+
     function fillCaseClientData() {
       const select = $('#caseClient');
       if (!select) return;
@@ -1308,6 +1344,7 @@
         $('#caseTotal').value = 0;
         $('#casePlanStatusView').value = 'لا توجد حالات';
         renderAttachmentsTable(0);
+        applyCasePermissions(null);
         return;
       }
 
@@ -1336,6 +1373,7 @@
       renderAttachmentsTable(clientId);
       renderCaseInventoryAvailable();
       renderCaseUsageTable();
+      applyCasePermissions(c);
     }
 
     async function saveCase() {
@@ -1344,8 +1382,12 @@
         toast('اختر عميلًا أولاً.', 'warn');
         return false;
       }
-      const total = calcCaseTotal();
       const existing = state.cases[clientId];
+      if (!canEditCase(existing)) {
+        toast('ليس لديك صلاحية تعديل هذه الحالة.', 'warn');
+        return false;
+      }
+      const total = calcCaseTotal();
       const payload = {
         client_id: clientId,
         gap_type: $('#caseGapType').value,
@@ -1392,6 +1434,11 @@
       if (!clientId || !files.length) return;
 
       const caseRow = state.cases[clientId];
+      if (!canEditCase(caseRow)) {
+        toast('ليس لديك صلاحية رفع مرفقات لهذه الحالة.', 'warn');
+        $('#caseAttachments').value = '';
+        return;
+      }
       if (!caseRow?.id) {
         toast('احفظ الحالة أولًا قبل رفع المرفقات.', 'warn');
         $('#caseAttachments').value = '';
@@ -1438,6 +1485,11 @@
       const clientId = Number($('#caseClient').value);
       if (!clientId) {
         toast('اختر عميلًا أولاً.', 'warn');
+        return;
+      }
+      const caseRow = state.cases[clientId];
+      if (!canEditCase(caseRow)) {
+        toast('ليس لديك صلاحية إرسال هذه الحالة.', 'warn');
         return;
       }
       const diagnosis = $('#caseDiagnosis').value.trim();
