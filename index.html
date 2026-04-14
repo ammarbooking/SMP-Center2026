@@ -169,6 +169,16 @@
     .draft{background:#eef4ff;color:#2257d8}
     .danger{background:#fff1f1;color:#b94343}
 
+    .filter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .report-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+    .report-card{padding:18px;background:#fff;border:1px solid #d9e3ef;border-radius:24px;box-shadow:var(--shadow-md)}
+    .report-card .label{color:#7b8ca2;font-size:13px;margin-bottom:8px}
+    .report-card .value{font-size:28px;font-weight:800}
+    .subtle{color:#7b8ca2;font-size:12px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:1260px){.filter-grid,.report-grid,.two-col{grid-template-columns:1fr 1fr}}
+    @media (max-width:760px){.filter-grid,.report-grid,.two-col{grid-template-columns:1fr}}
+
     .toast-wrap{position:fixed;left:20px;bottom:20px;display:grid;gap:10px;z-index:1000}
     .toast{min-width:270px;max-width:360px;color:#fff;padding:14px 16px;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.16)}
     .toast.success{background:#0d7150}
@@ -250,6 +260,7 @@
         <nav class="menu" id="menuNav">
           <button data-view="dashboard" class="active" type="button"><span>الرئيسية</span><small>⌂</small></button>
           <button data-view="stats" type="button"><span>الإحصائيات</span><small>●</small></button>
+          <button data-view="reports" type="button"><span>تقارير الأدمن</span><small>◍</small></button>
           <button data-view="clients" type="button"><span>العملاء</span><small>＋</small></button>
           <button data-view="booking" type="button"><span>الحجوزات</span><small>◔</small></button>
           <button data-view="specialist" type="button"><span>ملف الأخصائي</span><small>▣</small></button>
@@ -466,6 +477,79 @@
             <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn btn-soft" id="saveCaseBtn" type="button">حفظ الحالة</button>
               <button class="btn btn-primary" id="sendToReceptionBtn" type="button">إرسال للاستقبال</button>
+            </div>
+          </div>
+        </section>
+
+
+        <section class="view hidden" data-view="reports">
+          <div class="panel">
+            <div class="section-title">
+              <h3>لوحة تقارير الأدمن</h3>
+              <span>مالية + تشغيلية + أخصائيين + عملاء + جلسات</span>
+            </div>
+
+            <div class="filter-grid">
+              <div class="field"><label>من تاريخ</label><input id="reportDateFrom" type="date" /></div>
+              <div class="field"><label>إلى تاريخ</label><input id="reportDateTo" type="date" /></div>
+              <div class="field"><label>الأخصائي</label><select id="reportSpecialistFilter"></select></div>
+              <div class="field" style="display:flex;align-items:end;gap:10px">
+                <button class="btn btn-primary" id="applyReportsBtn" type="button" style="width:100%">تحديث التقارير</button>
+              </div>
+            </div>
+
+            <div class="report-grid" id="reportsKpis"></div>
+
+            <div class="two-col">
+              <div class="panel">
+                <div class="section-title"><h3>تقرير الأخصائيين</h3><span>إنتاجية وإيراد وإلغاء</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>الأخصائي</th><th>الحالات</th><th>الجلسات</th><th>المحصل</th><th>المتبقي</th><th>الملغاة</th></tr>
+                    </thead>
+                    <tbody id="adminSpecialistsReportTable"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="section-title"><h3>التشغيل اليومي</h3><span>مواعيد وتحويلات واستقبال</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>المؤشر</th><th>القيمة</th></tr>
+                    </thead>
+                    <tbody id="adminOpsReportTable"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="two-col" style="margin-top:14px">
+              <div class="panel">
+                <div class="section-title"><h3>العملاء والمتابعة</h3><span>المتعثرون والخطط النشطة</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>العميل</th><th>الأخصائي</th><th>عدد الجلسات</th><th>المنفذ</th><th>المتبقي</th><th>المديونية</th></tr>
+                    </thead>
+                    <tbody id="adminClientsReportTable"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="section-title"><h3>الجلسات والخطط</h3><span>نوع الجلسة وحالة الخطة</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>العميل</th><th>نوع الجلسة</th><th>التشخيص</th><th>الخطة</th><th>الإجمالي</th><th>الحالة</th></tr>
+                    </thead>
+                    <tbody id="adminPlansReportTable"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -880,7 +964,7 @@
     function applyRoleVisibility() {
       const role = state.currentUser?.role;
       const map = {
-        admin: ['dashboard', 'stats', 'clients', 'booking', 'specialist', 'team', 'inventory', 'users'],
+        admin: ['dashboard', 'stats', 'reports', 'clients', 'booking', 'specialist', 'team', 'inventory', 'users'],
         reception: ['dashboard', 'stats', 'clients', 'booking', 'inventory'],
         specialist: ['dashboard', 'specialist']
       };
@@ -1308,6 +1392,8 @@
       $('#bookRemaining').value = '';
       $('#bookNotes').value = '';
       $('#bookDate').value = todayStr();
+      if ($('#reportDateFrom')) $('#reportDateFrom').onchange = renderAdminReports;
+      if ($('#reportDateTo')) $('#reportDateTo').onchange = renderAdminReports;
       $('#bookTime').value = '';
       fillBookingCases();
     }
@@ -1431,6 +1517,165 @@
       }
     }
 
+    function parseBookingNotes(notes) {
+      const raw = String(notes || '');
+      const parts = raw.split('|').map(s => s.trim()).filter(Boolean);
+      const info = {};
+      for (const part of parts) {
+        const idx = part.indexOf(':');
+        if (idx === -1) continue;
+        const key = part.slice(0, idx).trim();
+        const value = part.slice(idx + 1).trim();
+        info[key] = value;
+      }
+      return info;
+    }
+
+    function getReportFilters() {
+      return {
+        from: $('#reportDateFrom')?.value || '',
+        to: $('#reportDateTo')?.value || '',
+        specialist: $('#reportSpecialistFilter')?.value || 'all'
+      };
+    }
+
+    function bookingWithinFilters(booking, filters) {
+      if (!booking) return false;
+      if (filters.from && booking.date < filters.from) return false;
+      if (filters.to && booking.date > filters.to) return false;
+      if (filters.specialist !== 'all' && booking.specialist !== filters.specialist) return false;
+      return true;
+    }
+
+    function caseMatchesSpecialistFilter(caseRow, filters) {
+      if (!caseRow) return filters.specialist === 'all';
+      if (filters.specialist === 'all') return true;
+      return String(caseRow.specialistName || '') === String(filters.specialist);
+    }
+
+    function fillReportsSpecialistFilter() {
+      const select = $('#reportSpecialistFilter');
+      if (!select) return;
+      const specialists = state.users.filter(u => u.role === 'specialist');
+      const current = select.value || 'all';
+      select.innerHTML = `<option value="all">كل الأخصائيين</option>` + specialists.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      select.value = specialists.some(s => s.name === current) || current === 'all' ? current : 'all';
+    }
+
+    function renderAdminReports() {
+      if (!$('#reportsKpis')) return;
+      fillReportsSpecialistFilter();
+      const filters = getReportFilters();
+      const filteredBookings = state.bookings.filter(b => bookingWithinFilters(b, filters));
+      const filteredCases = Object.values(state.cases).filter(c => caseMatchesSpecialistFilter(c, filters));
+
+      const paid = filteredBookings.reduce((sum, b) => sum + Number(b.paid || 0), 0);
+      const outstanding = filteredBookings.reduce((sum, b) => sum + Number(b.remaining || 0), 0);
+      const cancelled = filteredBookings.filter(b => b.status === 'ملغي').length;
+      const executed = filteredBookings.filter(b => b.status === 'منفذ').length;
+      const activeCases = filteredCases.filter(c => Number(c.sessionsCount || 0) > 0 && Number(c.totalPrice || 0) > 0).length;
+      const multiSessionCases = filteredCases.filter(c => Number(c.sessionsCount || 0) > 1).length;
+      const completedCases = filteredCases.filter(c => Number(c.clientId) && clientRemainingSessions(c.clientId) === 0 && totalSessions(c.clientId) > 0).length;
+      const avgCaseValue = filteredCases.length ? Math.round(filteredCases.reduce((sum, c) => sum + Number(c.totalPrice || 0), 0) / filteredCases.length) : 0;
+
+      $('#reportsKpis').innerHTML = [
+        ['المحصل', `${paid.toLocaleString('ar-SA')} ر.س`, 'إجمالي ضمن الفلتر'],
+        ['المتبقي', `${outstanding.toLocaleString('ar-SA')} ر.س`, 'مبالغ قيد التحصيل'],
+        ['الحالات النشطة', activeCases, 'خطط علاجية فعالة'],
+        ['متوسط قيمة الحالة', `${avgCaseValue.toLocaleString('ar-SA')} ر.س`, 'متوسط الإجمالي'],
+        ['الجلسات المنفذة', executed, 'ضمن الفترة'],
+        ['الحالات متعددة الجلسات', multiSessionCases, 'أكثر من جلسة'],
+        ['الحالات المكتملة', completedCases, 'أنهت الخطة'],
+        ['الحجوزات الملغاة', cancelled, 'ضمن الفترة']
+      ].map(([label, value, hint]) => `<div class="report-card"><div class="label">${label}</div><div class="value">${value}</div><div class="subtle">${hint}</div></div>`).join('');
+
+      const specialistMap = {};
+      filteredBookings.forEach(b => {
+        const key = b.specialist || 'غير محدد';
+        specialistMap[key] ||= { cases: new Set(), sessions: 0, paid: 0, remaining: 0, cancelled: 0 };
+        specialistMap[key].sessions += 1;
+        specialistMap[key].paid += Number(b.paid || 0);
+        specialistMap[key].remaining += Number(b.remaining || 0);
+        if (b.status === 'ملغي') specialistMap[key].cancelled += 1;
+        if (b.clientId) specialistMap[key].cases.add(b.clientId);
+      });
+      filteredCases.forEach(c => {
+        const key = c.specialistName || 'غير محدد';
+        specialistMap[key] ||= { cases: new Set(), sessions: 0, paid: 0, remaining: 0, cancelled: 0 };
+        if (c.clientId) specialistMap[key].cases.add(c.clientId);
+      });
+      $('#adminSpecialistsReportTable').innerHTML = Object.entries(specialistMap).map(([name, g]) => `
+        <tr>
+          <td>${name}</td>
+          <td>${g.cases.size}</td>
+          <td>${g.sessions}</td>
+          <td>${g.paid.toLocaleString('ar-SA')} ر.س</td>
+          <td>${g.remaining.toLocaleString('ar-SA')} ر.س</td>
+          <td>${g.cancelled}</td>
+        </tr>`).join('') || `<tr><td colspan="6">لا توجد بيانات</td></tr>`;
+
+      const today = todayStr();
+      const todayBookings = filteredBookings.filter(b => b.date === today).length;
+      const pendingReception = filteredCases.filter(c => c.planStatus === 'pending_booking').length;
+      const awaitingExecution = filteredBookings.filter(b => b.status === 'مؤكد').length;
+      const overdueCollections = filteredBookings.filter(b => Number(b.remaining || 0) > 0).length;
+      $('#adminOpsReportTable').innerHTML = [
+        ['مواعيد اليوم', todayBookings],
+        ['حالات بانتظار الاستقبال', pendingReception],
+        ['حجوزات مؤكدة غير منفذة', awaitingExecution],
+        ['عملاء عليهم متبقي', overdueCollections],
+        ['نسبة الإشغال', `${Math.min(100, todayBookings * 12)}%`],
+        ['إجمالي الحالات المرسلة', filteredCases.filter(c => c.planStatus === 'pending_booking' || c.planStatus === 'booked').length]
+      ].map(([label, value]) => `<tr><td>${label}</td><td>${value}</td></tr>`).join('');
+
+      const clientRows = filteredCases.map(c => {
+        const client = state.clients.find(x => x.id === c.clientId);
+        const clientBookings = filteredBookings.filter(b => b.clientId === c.clientId);
+        const debt = clientBookings.reduce((sum, b) => sum + Number(b.remaining || 0), 0);
+        return {
+          name: client?.name || '-',
+          specialist: c.specialistName || '-',
+          sessions: Number(c.sessionsCount || 0),
+          done: executedSessions(c.clientId),
+          remain: Math.max(0, Number(c.sessionsCount || 0) - executedSessions(c.clientId)),
+          debt
+        };
+      }).sort((a, b) => b.debt - a.debt || b.remain - a.remain);
+      $('#adminClientsReportTable').innerHTML = clientRows.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.specialist}</td>
+          <td>${r.sessions}</td>
+          <td>${r.done}</td>
+          <td>${r.remain}</td>
+          <td>${r.debt.toLocaleString('ar-SA')} ر.س</td>
+        </tr>`).join('') || `<tr><td colspan="6">لا توجد بيانات</td></tr>`;
+
+      const planRows = filteredCases.map(c => {
+        const client = state.clients.find(x => x.id === c.clientId);
+        const noteInfo = parseBookingNotes(filteredBookings.find(b => b.clientId === c.clientId)?.notes || '');
+        const sessionType = noteInfo['نوع الجلسة'] || noteInfo['نوع الجلسة '] || '-';
+        const statusLabel = c.planStatus === 'pending_booking' ? 'بانتظار الاستقبال' : c.planStatus === 'booked' ? 'تم الحجز' : 'مسودة';
+        return {
+          client: client?.name || '-',
+          sessionType,
+          diagnosis: c.diagnosis || '-',
+          sessions: Number(c.sessionsCount || 0),
+          total: Number(c.totalPrice || 0),
+          status: statusLabel
+        };
+      }).sort((a, b) => b.total - a.total);
+      $('#adminPlansReportTable').innerHTML = planRows.map(r => `
+        <tr>
+          <td>${r.client}</td>
+          <td>${r.sessionType}</td>
+          <td>${r.diagnosis}</td>
+          <td>${r.sessions} جلسة</td>
+          <td>${r.total.toLocaleString('ar-SA')} ر.س</td>
+          <td>${r.status}</td>
+        </tr>`).join('') || `<tr><td colspan="6">لا توجد بيانات</td></tr>`;
+    }
+
     function renderTeam() {
       const grouped = {};
       state.bookings.forEach(b => {
@@ -1529,6 +1774,7 @@
       fillClientSelects();
       fillBookingCases();
       renderStats();
+      renderAdminReports();
       renderTimeline();
       renderClientsTable($('#clientSearch')?.value || '');
       renderBookingsTable();
@@ -1549,6 +1795,10 @@
       $('#saveClientBtn').onclick = saveClient;
       $('#refreshClientsBtn').onclick = async () => { await loadClients(); renderClientsTable($('#clientSearch').value); };
       $('#clientSearch').oninput = (e) => renderClientsTable(e.target.value);
+      if ($('#applyReportsBtn')) $('#applyReportsBtn').onclick = renderAdminReports;
+      if ($('#reportSpecialistFilter')) $('#reportSpecialistFilter').onchange = renderAdminReports;
+      if ($('#reportDateFrom')) $('#reportDateFrom').value = '';
+      if ($('#reportDateTo')) $('#reportDateTo').value = '';
 
       $('#saveBookingBtn').onclick = saveBooking;
       $('#todayPhonesBtn').onclick = showTodayPhones;
@@ -1556,6 +1806,8 @@
       $('#bookCase').onchange = fillBookingCaseDetails;
       $('#bookPaid').oninput = recalcBookingRemaining;
       $('#bookDate').value = todayStr();
+      if ($('#reportDateFrom')) $('#reportDateFrom').onchange = renderAdminReports;
+      if ($('#reportDateTo')) $('#reportDateTo').onchange = renderAdminReports;
 
       $('#caseClient').onchange = fillCaseClientData;
       $('#casePrice').oninput = calcCaseTotal;
