@@ -6,13 +6,13 @@
   <title>SMP Center — Updated Workflow</title>
   <style>
     :root{
-      --bg:#f6f8fb;
+      --bg:#f5f7fb;
       --surface:#ffffff;
       --surface-dark:#0f1722;
       --surface-dark-2:#162233;
       --text:#142334;
       --muted:#75859a;
-      --line:#e8eef5;
+      --line:#d9e3ef;
       --primary:#2257d8;
       --primary-2:#3c73f0;
       --primary-soft:#eef4ff;
@@ -21,7 +21,7 @@
       --danger:#cd5555;
       --shadow-xl:0 30px 80px rgba(17,28,42,.10);
       --shadow-lg:0 18px 50px rgba(17,28,42,.08);
-      --shadow-md:0 10px 30px rgba(17,28,42,.06);
+      --shadow-md:0 10px 30px rgba(17,28,42,.10);
     }
 
     *{box-sizing:border-box}
@@ -30,10 +30,7 @@
       margin:0;
       font-family:"Segoe UI",Tahoma,sans-serif;
       color:var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(34,87,216,.06), transparent 24%),
-        radial-gradient(circle at bottom left, rgba(12,156,104,.05), transparent 20%),
-        linear-gradient(180deg,#f8fafc 0%, #f5f7fb 100%);
+      background:linear-gradient(180deg,#f8fafc 0%, #f5f7fb 100%);
     }
     button,input,select,textarea{font:inherit}
     a{text-decoration:none;color:inherit}
@@ -47,15 +44,13 @@
       justify-content:center;
       position:relative;
       padding:24px;
-      background:
-        linear-gradient(rgba(6,14,28,.45), rgba(6,14,28,.45)),
-        url("images.jpg") center center / cover no-repeat;
+      background:linear-gradient(135deg,#0f1722 0%,#1f4068 100%);
       overflow:hidden;
     }
     .login-card{
       width:100%;
       max-width:500px;
-      background:rgba(10,18,33,.58);
+      background:rgba(10,18,33,.68);
       border:1px solid rgba(255,255,255,.18);
       border-radius:32px;
       padding:30px;
@@ -118,14 +113,14 @@
     .side-card p{margin:5px 0;font-size:13px;line-height:1.8;color:rgba(255,255,255,.74)}
 
     .main{display:grid;gap:16px}
-    .topbar{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:30px;padding:18px 22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-md);position:sticky;top:20px;z-index:20}
+    .topbar{background:#ffffff;border:1px solid #d9e3ef;border-radius:30px;padding:18px 22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow-md);position:sticky;top:20px;z-index:20}
     .topbar h2{margin:0;font-size:30px;font-weight:800}
     .topbar p{margin:6px 0 0;color:var(--muted)}
     .top-actions{display:flex;gap:10px;flex-wrap:wrap}
     .chip{padding:11px 14px;border-radius:16px;background:#fafcff;border:1px solid var(--line);color:#5d738d;font-size:13px;font-weight:700}
 
     .hero-dashboard{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .card,.panel{background:var(--surface);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow-md)}
+    .card,.panel{background:#ffffff;border:1px solid #d9e3ef;border-radius:30px;box-shadow:var(--shadow-md)}
     .card{padding:24px}
     .panel{padding:20px}
     .hero-main h3{margin:0;font-size:34px;line-height:1.24;font-weight:800}
@@ -153,7 +148,7 @@
     .split{grid-template-columns:1.15fr .85fr}
     .forms{grid-template-columns:1fr 1fr}
     .mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .mini{border:1px solid var(--line);background:linear-gradient(180deg,#fbfdff,#f8fbff);border-radius:22px;padding:16px}
+    .mini{border:1px solid #d9e3ef;background:#ffffff;border-radius:22px;padding:16px}
     .mini .label{color:#7b8ca2;font-size:13px;margin-bottom:8px}
     .mini .value{font-size:24px;font-weight:800}
     .alerts{display:grid;gap:10px}
@@ -162,7 +157,7 @@
     .search{max-width:320px}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .full{grid-column:1/-1}
-    .table-wrap{overflow-x:auto;border:1px solid #edf2f8;border-radius:20px}
+    .table-wrap{overflow-x:auto;border:1px solid #cfdceb;border-radius:20px;background:#ffffff}
     table{width:100%;min-width:640px;border-collapse:collapse;font-size:14px}
     th,td{text-align:right;padding:14px 12px;border-bottom:1px solid #edf2f8;white-space:nowrap;vertical-align:top}
     th{background:#f9fbff;color:#7c8ea4;font-size:12px;font-weight:800}
@@ -561,7 +556,7 @@
     const $$ = (s) => Array.from(document.querySelectorAll(s));
 
     const supabaseUrl = 'https://vglgnxynmfeuzseuoluu.supabase.co';
-    const supabaseKey = 'ضع-هنا-anon-key-الحالي-الخاص-بمشروعك';
+    const supabaseKey = 'PUT_YOUR_REAL_SUPABASE_ANON_KEY_HERE';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     function todayStr() {
@@ -978,3 +973,540 @@
           <td>${c.phone}</td>
           <td>${c.city}</td>
           <td>${c.source}</td>
+          <td><button class="btn btn-soft" data-client-edit="${c.id}" type="button">تحميل</button></td>
+        </tr>`).join('') || `<tr><td colspan="5">لا توجد نتائج</td></tr>`;
+      $$('[data-client-edit]').forEach(btn => btn.onclick = () => loadClientIntoForm(Number(btn.dataset.clientEdit)));
+    }
+
+    function loadClientIntoForm(id) {
+      const c = state.clients.find(x => x.id === id);
+      if (!c) return;
+      $('#clientName').value = c.name;
+      $('#clientPhone').value = c.phone;
+      $('#clientGender').value = c.gender;
+      $('#clientCity').value = c.city;
+      $('#clientIdno').value = c.idno;
+      $('#clientBirth').value = c.birth;
+      $('#clientSource').value = c.source;
+      $('#clientOpenDate').value = c.openDate;
+      toast('تم تحميل بيانات العميل.');
+    }
+
+    async function saveClient() {
+      const data = {
+        full_name: $('#clientName').value.trim(),
+        phone: $('#clientPhone').value.trim(),
+        gender: $('#clientGender').value,
+        city: $('#clientCity').value.trim(),
+        national_id: $('#clientIdno').value.trim(),
+        birth_date: $('#clientBirth').value || null,
+        source: $('#clientSource').value,
+        open_date: $('#clientOpenDate').value || todayStr(),
+        status: 'نشط'
+      };
+      if (!data.full_name || !data.phone) {
+        toast('الاسم ورقم الجوال مطلوبان.', 'warn');
+        return;
+      }
+      try {
+        await queryOrThrow(supabase.from('clients').insert([data]), 'Failed saving client');
+        addNotification(`تم فتح ملف العميل ${data.full_name}`);
+        await loadClients();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ العميل في قاعدة البيانات.', 'warn');
+      }
+    }
+
+    function fillClientSelects() {
+      const clientsOptions = state.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      if ($('#caseClient')) $('#caseClient').innerHTML = clientsOptions;
+    }
+
+    function caseStatusLabel(status) {
+      if (status === 'pending_booking') return 'بانتظار الاستقبال';
+      if (status === 'booked') return 'تم الحجز';
+      return 'مسودة';
+    }
+
+    function bookingStatusBadge(status) {
+      if (status === 'منفذ') return '<span class="badge ok">منفذ</span>';
+      if (status === 'ملغي') return '<span class="badge danger">ملغي</span>';
+      return '<span class="badge draft">مؤكد</span>';
+    }
+
+    function calcCaseTotal() {
+      const price = Number($('#casePrice').value || 0);
+      const sessions = Number($('#caseSessions').value || 0);
+      const total = price * sessions;
+      $('#caseTotal').value = total;
+      return total;
+    }
+
+    function renderAttachmentsTable(clientId) {
+      const caseRow = state.cases[clientId];
+      const rows = state.attachments.filter(a => a.clientId === clientId && (!caseRow?.id || a.caseId === caseRow.id || a.caseId));
+      $('#attachmentsTable').innerHTML = rows.map(a => `
+        <tr>
+          <td>${a.fileName}</td>
+          <td>${a.fileType || '-'}</td>
+          <td>${a.fileUrl ? `<a href="${a.fileUrl}" target="_blank">فتح الملف</a>` : '-'}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="3">لا توجد مرفقات</td></tr>`;
+    }
+
+    function fillCaseClientData() {
+      const fallbackId = state.clients[0]?.id || 0;
+      const clientId = Number($('#caseClient')?.value || fallbackId);
+      if (!clientId) return;
+      $('#caseClient').value = String(clientId);
+      const bookings = state.bookings.filter(b => b.clientId === clientId);
+      const latest = bookings[bookings.length - 1];
+      $('#caseSessionType').value = latest?.sessionType || '';
+      $('#caseDone').value = executedSessions(clientId);
+      $('#caseRemain').value = clientRemainingSessions(clientId);
+      const c = state.cases[clientId] || {};
+      $('#caseGapType').value = c.gapType || 'وراثي';
+      $('#caseArea').value = c.area || 'مقدمة';
+      $('#caseDegree').value = c.degree || 'خفيف';
+      $('#caseScalp').value = c.scalp || 'دهنية';
+      $('#caseNotes').value = c.notes || '';
+      $('#caseDiagnosis').value = c.diagnosis || '';
+      $('#casePrice').value = c.pricePerSession || 0;
+      $('#caseSessions').value = c.sessionsCount || 0;
+      $('#caseTotal').value = c.totalPrice || 0;
+      $('#casePlanStatusView').value = caseStatusLabel(c.planStatus || 'draft');
+      renderAttachmentsTable(clientId);
+    }
+
+    async function saveCase() {
+      const clientId = Number($('#caseClient').value);
+      if (!clientId) {
+        toast('اختر عميلًا أولاً.', 'warn');
+        return false;
+      }
+      const total = calcCaseTotal();
+      const existing = state.cases[clientId];
+      const payload = {
+        client_id: clientId,
+        gap_type: $('#caseGapType').value,
+        area: $('#caseArea').value,
+        degree: $('#caseDegree').value,
+        scalp_type: $('#caseScalp').value,
+        notes: $('#caseNotes').value.trim(),
+        diagnosis: $('#caseDiagnosis').value.trim(),
+        price_per_session: Number($('#casePrice').value || 0),
+        sessions_count: Number($('#caseSessions').value || 0),
+        total_price: total,
+        plan_status: existing?.planStatus || 'draft',
+        specialist_name: state.currentUser?.name || '',
+        specialist_id: state.currentUser?.id || null,
+        updated_at: new Date().toISOString()
+      };
+      try {
+        await queryOrThrow(supabase.from('cases').upsert(payload, { onConflict: 'client_id' }), 'Failed saving case');
+        const client = state.clients.find(c => c.id === clientId);
+        addNotification(`تم حفظ خطة الحالة للعميل ${client?.name || ''}`);
+        await loadCases();
+        await loadAttachments();
+        renderAll();
+        return true;
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ ملف الحالة.', 'warn');
+        return false;
+      }
+    }
+
+    async function uploadCaseAttachments() {
+      const clientId = Number($('#caseClient').value);
+      const files = Array.from($('#caseAttachments').files || []);
+      if (!clientId || !files.length) return;
+
+      const caseRow = state.cases[clientId];
+      if (!caseRow?.id) {
+        toast('احفظ الحالة أولًا قبل رفع المرفقات.', 'warn');
+        $('#caseAttachments').value = '';
+        return;
+      }
+
+      for (const file of files) {
+        try {
+          const safeName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+          const filePath = `client-${clientId}/case-${caseRow.id}/${safeName}`;
+
+          const { error: uploadError } = await supabase.storage.from('case-files').upload(filePath, file, { upsert: true });
+          if (uploadError) throw uploadError;
+
+          let fileUrl = '';
+          const { data: signed, error: signedError } = await supabase.storage.from('case-files').createSignedUrl(filePath, 60 * 60 * 24 * 7);
+          if (!signedError && signed?.signedUrl) fileUrl = signed.signedUrl;
+
+          await queryOrThrow(
+            supabase.from('case_attachments').insert([{
+              case_id: caseRow.id,
+              client_id: clientId,
+              file_name: file.name,
+              file_path: filePath,
+              file_url: fileUrl,
+              file_type: file.type || '',
+              uploaded_by: state.currentUser?.name || ''
+            }]),
+            'Failed saving attachment metadata'
+          );
+        } catch (err) {
+          console.error(err);
+          toast(`فشل رفع الملف: ${file.name}`, 'warn');
+        }
+      }
+
+      $('#caseAttachments').value = '';
+      await loadAttachments();
+      renderAttachmentsTable(clientId);
+      addNotification('تم رفع المرفقات بنجاح.');
+    }
+
+    async function sendCaseToReception() {
+      const clientId = Number($('#caseClient').value);
+      if (!clientId) {
+        toast('اختر عميلًا أولاً.', 'warn');
+        return;
+      }
+      const diagnosis = $('#caseDiagnosis').value.trim();
+      const price = Number($('#casePrice').value || 0);
+      const sessions = Number($('#caseSessions').value || 0);
+      if (!diagnosis || !price || !sessions) {
+        toast('أدخل التشخيص وسعر الجلسة وعدد الجلسات أولاً.', 'warn');
+        return;
+      }
+      const ok = await saveCase();
+      if (!ok) return;
+      try {
+        await queryOrThrow(
+          supabase.from('cases').update({
+            plan_status: 'pending_booking',
+            sent_to_reception_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }).eq('client_id', clientId),
+          'Failed sending case to reception'
+        );
+        const client = state.clients.find(c => c.id === clientId);
+        addNotification(`تم إرسال حالة العميل ${client?.name || ''} إلى الاستقبال.`);
+        await loadCases();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل إرسال الحالة للاستقبال.', 'warn');
+      }
+    }
+
+    function fillBookingCases() {
+      const select = $('#bookCase');
+      if (!select) return;
+      const pendingCases = Object.values(state.cases)
+        .filter(c => c.planStatus === 'pending_booking')
+        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
+      select.innerHTML = pendingCases.map(c => {
+        const client = state.clients.find(x => x.id === c.clientId);
+        return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${c.diagnosis || 'بدون تشخيص'} — ${c.totalPrice} ر.س</option>`;
+      }).join('') || `<option value="">لا توجد حالات مرسلة من الأخصائي</option>`;
+      fillBookingCaseDetails();
+    }
+
+    function fillBookingCaseDetails() {
+      const clientId = Number($('#bookCase')?.value || 0);
+      const c = state.cases[clientId];
+      const client = state.clients.find(x => x.id === clientId);
+      $('#bookClientNameView').value = client?.name || '';
+      $('#bookDiagnosisView').value = c?.diagnosis || '';
+      $('#bookSpecialistView').value = c?.specialistName || '';
+      $('#bookSessionsCountView').value = c?.sessionsCount || 0;
+      $('#bookPricePerSessionView').value = c?.pricePerSession || 0;
+      $('#bookTotalView').value = c?.totalPrice || 0;
+      const paid = Number($('#bookPaid').value || 0);
+      $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
+    }
+
+    function recalcBookingRemaining() {
+      const total = Number($('#bookTotalView').value || 0);
+      const paid = Number($('#bookPaid').value || 0);
+      $('#bookRemaining').value = Math.max(0, total - paid);
+    }
+
+    function clearBookingForm() {
+      $('#bookPaid').value = '';
+      $('#bookRemaining').value = '';
+      $('#bookNotes').value = '';
+      $('#bookDate').value = todayStr();
+      $('#bookTime').value = '';
+      fillBookingCases();
+    }
+
+    async function saveBooking() {
+      const clientId = Number($('#bookCase').value);
+      const caseRow = state.cases[clientId];
+      if (!clientId || !caseRow) {
+        toast('اختر حالة مرسلة من الأخصائي أولاً.', 'warn');
+        return;
+      }
+      const total = Number(caseRow.totalPrice || 0);
+      const paid = Number($('#bookPaid').value || 0);
+      const remaining = Math.max(0, total - paid);
+
+      const b = {
+        client_id: clientId,
+        session_type: $('#bookSessionType').value,
+        service_type: $('#bookService').value,
+        previous_smp: 'لا',
+        booking_date: $('#bookDate').value,
+        booking_time: $('#bookTime').value,
+        client_type: $('#bookClientType').value,
+        specialist_name: caseRow.specialistName || '',
+        paid,
+        remaining,
+        payment_method: $('#bookPayment').value,
+        notes: [
+          `التشخيص: ${caseRow.diagnosis || '-'}`,
+          `عدد الجلسات: ${caseRow.sessionsCount || 0}`,
+          `سعر الجلسة: ${caseRow.pricePerSession || 0}`,
+          $('#bookNotes').value.trim()
+        ].filter(Boolean).join(' | '),
+        status: 'confirmed'
+      };
+
+      if (!b.booking_date || !b.booking_time || !b.specialist_name) {
+        toast('أكمل بيانات الحجز الأساسية.', 'warn');
+        return;
+      }
+
+      try {
+        const conflicts = await queryOrThrow(
+          supabase.from('bookings').select('id')
+            .eq('specialist_name', b.specialist_name)
+            .eq('booking_date', b.booking_date)
+            .eq('booking_time', b.booking_time)
+            .neq('status', 'cancelled'),
+          'Failed checking conflict'
+        );
+        if (conflicts.length) {
+          toast('يوجد تعارض: هذا الأخصائي لديه موعد في نفس الوقت.', 'warn');
+          return;
+        }
+
+        await queryOrThrow(supabase.from('bookings').insert([b]), 'Failed inserting booking');
+        await queryOrThrow(
+          supabase.from('cases').update({ plan_status: 'booked', updated_at: new Date().toISOString() }).eq('client_id', clientId),
+          'Failed updating case status after booking'
+        );
+        const client = state.clients.find(c => c.id === b.client_id);
+        addNotification(`تم حجز موعد جديد للعميل ${client?.name || ''} مع ${b.specialist_name}`);
+        clearBookingForm();
+        await loadBookings();
+        await loadCases();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ الحجز في قاعدة البيانات.', 'warn');
+      }
+    }
+
+    function renderBookingsTable() {
+      const rows = [...state.bookings].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+      $('#bookingsTable').innerHTML = rows.map(b => {
+        const c = state.clients.find(x => x.id === b.clientId);
+        const caseRow = state.cases[b.clientId] || {};
+        const total = Number(caseRow.totalPrice || (Number(b.paid || 0) + Number(b.remaining || 0)));
+        return `
+          <tr>
+            <td>${c?.name || '-'}</td>
+            <td>${caseRow.diagnosis || '-'}</td>
+            <td>${b.specialist}</td>
+            <td>${total.toLocaleString('ar-SA')} ر.س</td>
+            <td>${Number(b.paid || 0).toLocaleString('ar-SA')} ر.س</td>
+            <td>${Number(b.remaining || 0).toLocaleString('ar-SA')} ر.س</td>
+            <td>${formatDateDisplay(b.date)}</td>
+            <td>${formatTime12(b.time)}</td>
+            <td>${bookingStatusBadge(b.status)}</td>
+          </tr>`;
+      }).join('') || `<tr><td colspan="9">لا توجد مواعيد</td></tr>`;
+    }
+
+    function showTodayPhones() {
+      const todays = state.bookings.filter(b => b.date === todayStr());
+      if (!todays.length) {
+        toast('لا توجد حجوزات اليوم.', 'warn');
+        return;
+      }
+      const html = todays.map(b => {
+        const c = state.clients.find(x => x.id === b.clientId);
+        return `${c?.name || '-'} — ${c?.phone || '-'}`;
+      }).join('<br>');
+      modal('أرقام عملاء اليوم', html, [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+    }
+
+    async function markExecutedFirstToday() {
+      const first = state.bookings.find(b => b.date === todayStr() && b.status === 'مؤكد');
+      if (!first) {
+        toast('لا يوجد موعد مؤكد اليوم لتحديثه.', 'warn');
+        return;
+      }
+      try {
+        await queryOrThrow(supabase.from('bookings').update({ status: 'executed' }).eq('id', first.id), 'Failed updating booking status');
+        addNotification('تم تحديث أول موعد اليوم إلى منفذ.');
+        await loadBookings();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل تحديث حالة الحجز.', 'warn');
+      }
+    }
+
+    function renderTeam() {
+      const grouped = {};
+      state.bookings.forEach(b => {
+        const key = b.specialist || 'غير محدد';
+        grouped[key] ||= { sessions: 0, revenue: 0, cancelled: 0 };
+        grouped[key].sessions += 1;
+        grouped[key].revenue += Number(b.paid || 0);
+        if (b.status === 'ملغي') grouped[key].cancelled += 1;
+      });
+      $('#teamTable').innerHTML = Object.entries(grouped).map(([name, g]) => `
+        <tr>
+          <td>${name}</td>
+          <td>${g.sessions}</td>
+          <td>${g.revenue.toLocaleString('ar-SA')} ر.س</td>
+          <td>90 دقيقة</td>
+          <td>${g.cancelled}</td>
+        </tr>`).join('') || `<tr><td colspan="5">لا توجد بيانات</td></tr>`;
+    }
+
+    function renderInventory() {
+      $('#inventoryTable').innerHTML = state.inventory.map(i => {
+        const low = Number(i.qty) <= Number(i.min);
+        return `
+          <tr>
+            <td>${i.name}</td>
+            <td>${i.qty}</td>
+            <td>${i.min}</td>
+            <td><span class="badge ${low ? 'warn' : 'ok'}">${low ? 'ناقص' : 'ممتاز'}</span></td>
+          </tr>`;
+      }).join('') || `<tr><td colspan="4">لا توجد أصناف</td></tr>`;
+    }
+
+    async function saveInventory() {
+      const payload = {
+        item_name: $('#invName').value.trim(),
+        qty: Number($('#invQty').value || 0),
+        min_qty: Number($('#invMin').value || 0),
+        notes: $('#invNotes').value.trim()
+      };
+      if (!payload.item_name) {
+        toast('اسم الصنف مطلوب.', 'warn');
+        return;
+      }
+      try {
+        await queryOrThrow(supabase.from('inventory').insert([payload]), 'Failed saving inventory');
+        addNotification(`تمت إضافة صنف جديد للمخزون: ${payload.item_name}`);
+        await loadInventory();
+        renderInventory();
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ الصنف.', 'warn');
+      }
+    }
+
+    function renderUsers() {
+      $('#usersTable').innerHTML = state.users.map(u => `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.username}</td>
+          <td>${roleLabel(u.role)}</td>
+          <td><button class="btn btn-soft" data-user-reset="${u.id}" type="button">استعادة</button></td>
+        </tr>`).join('') || `<tr><td colspan="4">لا يوجد مستخدمون</td></tr>`;
+      $$('[data-user-reset]').forEach(btn => {
+        btn.onclick = () => {
+          modal('استعادة كلمة المرور', 'يمكن إعادة تعيين كلمة المرور من قاعدة البيانات أو شاشة الإدارة.', [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+        };
+      });
+    }
+
+    async function saveUser() {
+      const payload = {
+        full_name: $('#userName').value.trim(),
+        username: $('#userUsername').value.trim(),
+        password_text: $('#userPassword').value.trim(),
+        role: $('#userRole').value,
+        is_active: true
+      };
+      if (!payload.full_name || !payload.username || !payload.password_text) {
+        toast('جميع بيانات المستخدم مطلوبة.', 'warn');
+        return;
+      }
+      try {
+        await queryOrThrow(supabase.from('users').insert([payload]), 'Failed saving user');
+        addNotification(`تمت إضافة مستخدم جديد: ${payload.full_name}`);
+        await loadUsers();
+        renderQuickUsers();
+        renderUsers();
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ المستخدم.', 'warn');
+      }
+    }
+
+    function renderAll() {
+      renderHeader();
+      fillClientSelects();
+      fillBookingCases();
+      renderStats();
+      renderTimeline();
+      renderClientsTable($('#clientSearch')?.value || '');
+      renderBookingsTable();
+      renderTeam();
+      renderInventory();
+      renderUsers();
+      fillCaseClientData();
+    }
+
+    function bindEvents() {
+      $('#loginBtn').onclick = login;
+      $('#logoutBtn').onclick = logout;
+      $('#resetPasswordBtn').onclick = () => {
+        modal('استعادة كلمة المرور', 'في هذه النسخة، كلمة المرور الافتراضية تعود إلى <strong>1234</strong> من قاعدة البيانات.', [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
+      };
+
+      $$('#menuNav button').forEach(btn => btn.onclick = () => switchView(btn.dataset.view));
+      $('#saveClientBtn').onclick = saveClient;
+      $('#refreshClientsBtn').onclick = async () => { await loadClients(); renderClientsTable($('#clientSearch').value); };
+      $('#clientSearch').oninput = (e) => renderClientsTable(e.target.value);
+
+      $('#saveBookingBtn').onclick = saveBooking;
+      $('#todayPhonesBtn').onclick = showTodayPhones;
+      $('#markExecutedBtn').onclick = markExecutedFirstToday;
+      $('#bookCase').onchange = fillBookingCaseDetails;
+      $('#bookPaid').oninput = recalcBookingRemaining;
+      $('#bookDate').value = todayStr();
+
+      $('#caseClient').onchange = fillCaseClientData;
+      $('#casePrice').oninput = calcCaseTotal;
+      $('#caseSessions').oninput = calcCaseTotal;
+      $('#saveCaseBtn').onclick = saveCase;
+      $('#sendToReceptionBtn').onclick = sendCaseToReception;
+      $('#caseAttachments').onchange = uploadCaseAttachments;
+
+      $('#saveInventoryBtn').onclick = saveInventory;
+      $('#saveUserBtn').onclick = saveUser;
+      $('#quickBookBtn').onclick = () => switchView('booking');
+      $('#quickClientBtn').onclick = () => switchView('clients');
+      $('#quickTodayBtn').onclick = showTodayPhones;
+    }
+
+    bindEvents();
+    loadAllData();
+    renderQuickUsers();
+    renderHeader();
+  })();
+  </script>
+</body>
+</html>
