@@ -405,7 +405,9 @@
                 <div class="field"><label>حالة الحضور</label><select id="bookAttendance"><option>بانتظار الموعد</option><option>حضر</option><option>لم يحضر</option></select></div>
                 <div class="field"><label>إرفاق إيصال الدفع</label><input id="bookPaymentReceipt" type="file" accept="image/*,.pdf" multiple /></div>
                 <div class="field"><label>التاريخ</label><input id="bookDate" type="date" /></div>
-                <div class="field"><label>الوقت</label><input id="bookTime" type="time" /></div>
+                <div class="field"><label>وقت البداية</label><input id="bookTime" type="time" /></div>
+                <div class="field"><label>مدة الجلسة (دقيقة)</label><input id="bookDuration" type="number" min="15" step="15" value="60" /></div>
+                <div class="field"><label>وقت الانتهاء</label><input id="bookEndTime" type="time" readonly /></div>
                 <div class="field"><label>نوع العميل</label><select id="bookClientType"><option>جديد</option><option>جلسات قائمة</option></select></div>
                 <div class="field full"><label>ملاحظات الاستقبال</label><textarea id="bookNotes" placeholder="أدخل ملاحظات الاستقبال"></textarea></div>
               </div>
@@ -436,7 +438,7 @@
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>الوقت</th><th>الحضور</th><th>الحالة</th></tr>
+                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة</th><th>الحضور</th><th>الحالة</th></tr>
                   </thead>
                   <tbody id="bookingsTable"></tbody>
                 </table>
@@ -722,6 +724,8 @@
         previousSmp: row.previous_smp || 'لا',
         date: row.booking_date,
         time: String(row.booking_time || '').slice(0, 5),
+        endTime: String(row.booking_end_time || '').slice(0, 5),
+        durationMinutes: Number(row.duration_minutes || 0),
         clientType: row.client_type || 'جديد',
         specialist: row.specialist_name || '',
         paid: Number(row.paid || 0),
@@ -1559,6 +1563,24 @@
       }
     }
 
+    function addMinutesToTime(timeStr, minutesToAdd) {
+      if (!timeStr) return '';
+      const [h, m] = String(timeStr).slice(0, 5).split(':').map(Number);
+      const total = ((h || 0) * 60) + (m || 0) + Number(minutesToAdd || 0);
+      const normalized = ((total % (24 * 60)) + (24 * 60)) % (24 * 60);
+      const hh = String(Math.floor(normalized / 60)).padStart(2, '0');
+      const mm = String(normalized % 60).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function calculateBookingEndTime() {
+      const start = $('#bookTime')?.value || '';
+      const duration = Number($('#bookDuration')?.value || 0);
+      const end = start && duration > 0 ? addMinutesToTime(start, duration) : '';
+      if ($('#bookEndTime')) $('#bookEndTime').value = end;
+      return end;
+    }
+
     async function saveBooking() {
       const clientId = Number($('#bookCase').value);
       const client = state.clients.find(c => c.id === clientId);
@@ -1571,8 +1593,18 @@
       }
 
       const specialistName = caseRow?.specialistName || caseRow?.assignedSpecialistName || selectedSpecialist?.name || $('#bookSpecialistView').value || '';
+      const durationMinutes = Number($('#bookDuration').value || 0);
+      const bookingEndTime = calculateBookingEndTime();
       if (!$('#bookDate').value || !$('#bookTime').value || !specialistName) {
-        toast('أكمل التاريخ والوقت والأخصائي.', 'warn');
+        toast('أكمل التاريخ ووقت البداية والأخصائي.', 'warn');
+        return;
+      }
+      if (!durationMinutes || durationMinutes < 15) {
+        toast('أدخل مدة جلسة صحيحة، 15 دقيقة أو أكثر.', 'warn');
+        return;
+      }
+      if (!bookingEndTime) {
+        toast('تعذر حساب وقت انتهاء الجلسة.', 'warn');
         return;
       }
 
@@ -1587,6 +1619,8 @@
         previous_smp: 'لا',
         booking_date: $('#bookDate').value,
         booking_time: $('#bookTime').value,
+        booking_end_time: bookingEndTime,
+        duration_minutes: durationMinutes,
         client_type: $('#bookClientType').value,
         specialist_name: specialistName,
         paid,
@@ -1604,15 +1638,19 @@
 
       try {
         const conflicts = await queryOrThrow(
-          supabase.from('bookings').select('id')
+          supabase.from('bookings').select('*')
             .eq('specialist_name', b.specialist_name)
             .eq('booking_date', b.booking_date)
-            .eq('booking_time', b.booking_time)
             .neq('status', 'cancelled'),
           'Failed checking conflict'
         );
-        if (conflicts.length) {
-          toast('يوجد تعارض: هذا الأخصائي لديه موعد في نفس الوقت.', 'warn');
+        const hasOverlap = conflicts.some(existing => {
+          const existingStart = String(existing.booking_time || '').slice(0, 5);
+          const existingEnd = String(existing.booking_end_time || '').slice(0, 5) || addMinutesToTime(existingStart, Number(existing.duration_minutes || 0));
+          return existingStart && existingEnd && b.booking_time < existingEnd && bookingEndTime > existingStart;
+        });
+        if (hasOverlap) {
+          toast('يوجد تعارض في وقت الجلسة لهذا الأخصائي.', 'warn');
           return;
         }
 
@@ -1667,10 +1705,12 @@
             <td>${sessionBadge(caseRow, executed)}</td>
             <td>${formatDateDisplay(b.date)}</td>
             <td>${formatTime12(b.time)}</td>
+            <td>${formatTime12(b.endTime)}</td>
+            <td>${b.durationMinutes ? `${b.durationMinutes} دقيقة` : '-'}</td>
             <td>${attendanceBadge(b.attendance)}</td>
             <td>${bookingStatusBadge(b.status)}</td>
           </tr>`;
-      }).join('') || `<tr><td colspan="13">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="15">لا توجد مواعيد</td></tr>`;
     }
 
     function showTodayPhones() {
@@ -1683,7 +1723,7 @@
       }
       const html = todays.map(b => {
         const c = state.clients.find(x => x.id === b.clientId);
-        return `${c?.name || '-'} — ${formatTime12(b.time)}`;
+        return `${c?.name || '-'} — ${formatTime12(b.time)} إلى ${formatTime12(b.endTime)}`;
       }).join('<br>');
       modal('عملاء اليوم', html, [{ label: 'إغلاق', primary: true, onClick: closeModal }]);
     }
@@ -1974,7 +2014,10 @@
         $('#bookSpecialistView').value = specialist?.name || '';
       };
       $('#bookPaid').oninput = recalcBookingRemaining;
+      $('#bookTime').oninput = calculateBookingEndTime;
+      $('#bookDuration').oninput = calculateBookingEndTime;
       $('#bookDate').value = todayStr();
+      $('#bookDuration').value = 60;
 
       $('#caseClient').onchange = fillCaseClientData;
       $('#casePrice').oninput = calcCaseTotal;
