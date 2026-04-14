@@ -257,7 +257,7 @@
           <button data-view="team" type="button"><span>أداء الفريق</span><small>▤</small></button>
           <button data-view="inventory" type="button"><span>المخزون</span><small>◫</small></button>
           <button data-view="users" type="button"><span>المستخدمون</span><small>⚙</small></button>
-        </nav>
+        <button data-view="expenses" type="button"><span>المصروفات</span><small>💸</small></button></nav>
 
         <div class="side-card">
           <h4>ملخص اليوم</h4>
@@ -614,7 +614,39 @@
             </div>
           </div>
         </section>
-      </main>
+      
+<section class="view hidden" data-view="expenses">
+  <div class="forms">
+    <div class="panel">
+      <div class="section-title">
+        <h3>إضافة مصروف</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>نوع المصروف</label><input id="expType" type="text"></div>
+        <div class="field"><label>المبلغ</label><input id="expAmount" type="number"></div>
+        <div class="field"><label>التاريخ</label><input id="expDate" type="date"></div>
+        <div class="field full"><label>ملاحظات</label><textarea id="expNotes"></textarea></div>
+      </div>
+      <button class="btn btn-primary" id="saveExpenseBtn">حفظ المصروف</button>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">
+        <h3>سجل المصروفات</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th></tr>
+          </thead>
+          <tbody id="expensesTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
     </div>
   </section>
 
