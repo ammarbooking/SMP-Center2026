@@ -1479,6 +1479,7 @@
       renderPaymentReceiptsTable(clientId);
       const paid = Number($('#bookPaid').value || 0);
       $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
+      calculateBookingEndTime();
     }
 
     function recalcBookingRemaining() {
@@ -1494,6 +1495,7 @@
       $('#bookAttendance').value = 'بانتظار الموعد';
       $('#bookDate').value = todayStr();
       $('#bookTime').value = '';
+      if ($('#bookEndTime')) $('#bookEndTime').value = '';
       if ($('#assignSpecialist')) $('#assignSpecialist').value = '';
       if ($('#bookPaymentReceipt')) $('#bookPaymentReceipt').value = '';
       renderPaymentReceiptsTable(0);
@@ -2172,9 +2174,12 @@
       };
       $('#bookPaid').oninput = recalcBookingRemaining;
       $('#bookTime').oninput = calculateBookingEndTime;
+      $('#bookTime').onchange = calculateBookingEndTime;
       $('#bookDuration').oninput = calculateBookingEndTime;
+      $('#bookDuration').onchange = calculateBookingEndTime;
       $('#bookDate').value = todayStr();
       $('#bookDuration').value = 60;
+      calculateBookingEndTime();
 
       $('#caseClient').onchange = fillCaseClientData;
       $('#casePrice').oninput = calcCaseTotal;
