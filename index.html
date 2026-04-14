@@ -278,7 +278,7 @@
         <div class="topbar">
           <div>
             <h2 id="headerTitle">مرحبًا بك في النظام</h2>
-            <p id="headerDesc">الأخصائي يضع الخطة، والاستقبال يحجز ويحصّل.</p>
+            <p id="headerDesc">الاستقبال يرسل الحالة لأخصائي محدد، ثم تعود بعد الاعتماد لإتمام الحجز.</p>
           </div>
           <div class="top-actions">
             <div class="chip" id="notifChip">🔔 0 إشعارات</div>
@@ -291,8 +291,8 @@
         <section class="view" data-view="dashboard">
           <div class="hero-dashboard">
             <div class="card hero-main">
-              <h3>مسار عمل أوضح بين الأخصائي والاستقبال</h3>
-              <p>الأخصائي يحدد التشخيص، سعر الجلسة، عدد الجلسات، ويرفع المرفقات ثم يرسل الخطة للاستقبال. الاستقبال يدخل المدفوع فقط ويُحسب المتبقي تلقائيًا.</p>
+              <h3>مسار عمل أوضح بين الاستقبال والأخصائي</h3>
+              <p>الاستقبال يرسل الحالة إلى أخصائي محدد مع تقرير الدفع، ثم الأخصائي يحدد التشخيص وسعر الجلسة وعدد الجلسات ويرفع المرفقات قبل إعادة الحالة للاستقبال.</p>
               <div class="hero-buttons">
                 <button class="btn btn-primary" id="quickBookBtn" type="button">حجز موعد جديد</button>
                 <button class="btn btn-soft" id="quickClientBtn" type="button">فتح ملف عميل</button>
@@ -384,11 +384,12 @@
           <div class="forms">
             <div class="panel">
               <div class="section-title">
-                <h3>حجز موعد</h3>
-                <span>الحالة تصل من الأخصائي إلى الاستقبال</span>
+                <h3>الحجوزات والتحويل للأخصائي</h3>
+                <span>الاستقبال يحدد الأخصائي ويرسل الحالة له، وبعد اعتماد الخطة يعود الحجز للاستقبال</span>
               </div>
               <div class="form-grid">
-                <div class="field"><label>الحالة الجاهزة من الأخصائي</label><select id="bookCase"></select></div>
+                <div class="field"><label>العميل / الحالة</label><select id="bookCase"></select></div>
+                <div class="field"><label>إسناد إلى أخصائي</label><select id="assignSpecialist"></select></div>
                 <div class="field"><label>العميل</label><input id="bookClientNameView" type="text" readonly /></div>
                 <div class="field"><label>التشخيص</label><input id="bookDiagnosisView" type="text" readonly /></div>
                 <div class="field"><label>الأخصائي</label><input id="bookSpecialistView" type="text" readonly /></div>
@@ -405,7 +406,10 @@
                 <div class="field"><label>نوع العميل</label><select id="bookClientType"><option>جديد</option><option>جلسات قائمة</option></select></div>
                 <div class="field full"><label>ملاحظات الاستقبال</label><textarea id="bookNotes" placeholder="أدخل ملاحظات الاستقبال"></textarea></div>
               </div>
-              <div style="margin-top:16px"><button class="btn btn-primary" id="saveBookingBtn" type="button">تأكيد الحجز</button></div>
+              <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-soft" id="sendToSpecialistBtn" type="button">إرسال للأخصائي</button>
+                <button class="btn btn-primary" id="saveBookingBtn" type="button">تأكيد الحجز بعد اعتماد الأخصائي</button>
+              </div>
             </div>
 
             <div class="panel">
@@ -425,7 +429,7 @@
                   <tbody id="bookingsTable"></tbody>
                 </table>
               </div>
-              <div class="note">الاستقبال يستقبل الحالة الجاهزة من الأخصائي ويُدخل المدفوع فقط.</div>
+              <div class="note">الاستقبال يستطيع اختيار أخصائي محدد وإرسال الحالة له أولًا، ثم بعد اعتماد الأخصائي تعود الحالة كجاهزة للحجز النهائي.</div>
             </div>
           </div>
         </section>
@@ -434,11 +438,15 @@
           <div class="panel">
             <div class="section-title">
               <h3>ملف الأخصائي</h3>
-              <span>تشخيص + خطة علاج + مرفقات + إرسال للاستقبال</span>
+              <span>الحالات المسندة من الاستقبال + تقرير الدفع + اعتماد الخطة ثم إرسالها للاستقبال</span>
             </div>
             <div class="form-grid">
               <div class="field"><label>العميل</label><select id="caseClient"></select></div>
+              <div class="field"><label>الأخصائي المكلّف</label><input id="caseAssignedSpecialist" type="text" readonly /></div>
               <div class="field"><label>نوع الجلسة</label><input id="caseSessionType" type="text" readonly /></div>
+              <div class="field"><label>المدفوع من الاستقبال</label><input id="casePaymentReportAmount" type="number" readonly /></div>
+              <div class="field"><label>طريقة الدفع</label><input id="casePaymentReportMethod" type="text" readonly /></div>
+              <div class="field"><label>ملاحظات الاستقبال</label><textarea id="caseReceptionNotes" readonly></textarea></div>
               <div class="field"><label>الجلسات المنفذة</label><input id="caseDone" type="number" readonly /></div>
               <div class="field"><label>الجلسات المتبقية</label><input id="caseRemain" type="number" readonly /></div>
               <div class="field"><label>نوع الفراغ</label><select id="caseGapType"><option>وراثي</option><option>ندبات</option><option>ثعلبة</option><option>بعد زراعة</option><option>تصحيح SMP</option></select></div>
@@ -695,6 +703,12 @@
         planStatus: row.plan_status || 'draft',
         specialistName: row.specialist_name || '',
         specialistId: row.specialist_id || null,
+        assignedSpecialistId: row.assigned_specialist_id || null,
+        assignedSpecialistName: row.assigned_specialist_name || '',
+        paymentReportAmount: Number(row.payment_report_amount || 0),
+        paymentReportMethod: row.payment_report_method || '',
+        paymentReportNotes: row.payment_report_notes || '',
+        paymentReportSentAt: row.payment_report_sent_at || null,
         sentToReceptionAt: row.sent_to_reception_at || null
       };
     }
@@ -921,10 +935,12 @@
       const alerts = [];
       const cancelled = state.bookings.filter(b => b.status === 'ملغي').length;
       const pendingCases = Object.values(state.cases).filter(c => c.planStatus === 'pending_booking').length;
+      const pendingSpecialistCases = Object.values(state.cases).filter(c => c.planStatus === 'pending_specialist').length;
       if (cancelled >= 2) alerts.push(`ارتفاع الإلغاء: يوجد ${cancelled} حجوزات ملغاة.`);
       if (s.todayBookings >= 5) alerts.push(`زيادة الطلب: يوجد ${s.todayBookings} حجوزات اليوم.`);
       if (s.outstanding > 0) alerts.push(`المبالغ غير المحصلة: ${s.outstanding.toLocaleString('ar-SA')} ر.س.`);
-      if (pendingCases > 0) alerts.push(`هناك ${pendingCases} حالات مرسلة من الأخصائي بانتظار الحجز.`);
+      if (pendingSpecialistCases > 0) alerts.push(`هناك ${pendingSpecialistCases} حالات مرسلة من الاستقبال بانتظار الأخصائي.`);
+      if (pendingCases > 0) alerts.push(`هناك ${pendingCases} حالات معتمدة من الأخصائي بانتظار الحجز.`);
       if (!alerts.length) alerts.push('الوضع مستقر حاليًا ولا توجد تنبيهات حرجة.');
       return alerts;
     }
@@ -1024,7 +1040,21 @@
       if ($('#caseClient')) $('#caseClient').innerHTML = clientsOptions;
     }
 
+    function getSpecialists() {
+      return state.users.filter(u => u.role === 'specialist' && u.isActive);
+    }
+
+    function fillSpecialistSelect() {
+      const select = $('#assignSpecialist');
+      if (!select) return;
+      const specialists = getSpecialists();
+      select.innerHTML = ['<option value="">اختر الأخصائي</option>']
+        .concat(specialists.map(u => `<option value="${u.id}">${u.name}</option>`))
+        .join('');
+    }
+
     function caseStatusLabel(status) {
+      if (status === 'pending_specialist') return 'بانتظار الأخصائي';
       if (status === 'pending_booking') return 'بانتظار الاستقبال';
       if (status === 'booked') return 'تم الحجز';
       return 'مسودة';
@@ -1068,16 +1098,56 @@
     }
 
     function fillCaseClientData() {
-      const fallbackId = state.clients[0]?.id || 0;
-      const clientId = Number($('#caseClient')?.value || fallbackId);
-      if (!clientId) return;
-      $('#caseClient').value = String(clientId);
+      const select = $('#caseClient');
+      if (!select) return;
+
+      let caseEntries = Object.values(state.cases);
+      if (state.currentUser?.role === 'specialist') {
+        caseEntries = caseEntries.filter(c => c.assignedSpecialistId == state.currentUser.id || c.specialistId == state.currentUser.id);
+      }
+
+      caseEntries = caseEntries.sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
+
+      select.innerHTML = caseEntries.map(c => {
+        const client = state.clients.find(x => x.id === c.clientId);
+        return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${caseStatusLabel(c.planStatus)}</option>`;
+      }).join('') || '<option value="">لا توجد حالات مخصصة لك</option>';
+
+      const fallbackId = Number(select.value || caseEntries[0]?.clientId || 0);
+      const clientId = Number(select.value || fallbackId);
+      if (!clientId) {
+        $('#caseSessionType').value = '';
+        $('#caseDone').value = 0;
+        $('#caseRemain').value = 0;
+        $('#caseAssignedSpecialist').value = '';
+        $('#casePaymentReportAmount').value = 0;
+        $('#casePaymentReportMethod').value = '';
+        $('#caseReceptionNotes').value = '';
+        $('#caseGapType').value = 'وراثي';
+        $('#caseArea').value = 'مقدمة';
+        $('#caseDegree').value = 'خفيف';
+        $('#caseScalp').value = 'دهنية';
+        $('#caseNotes').value = '';
+        $('#caseDiagnosis').value = '';
+        $('#casePrice').value = 0;
+        $('#caseSessions').value = 0;
+        $('#caseTotal').value = 0;
+        $('#casePlanStatusView').value = 'لا توجد حالات';
+        renderAttachmentsTable(0);
+        return;
+      }
+
+      select.value = String(clientId);
       const bookings = state.bookings.filter(b => b.clientId === clientId);
       const latest = bookings[bookings.length - 1];
       $('#caseSessionType').value = latest?.sessionType || '';
       $('#caseDone').value = executedSessions(clientId);
       $('#caseRemain').value = clientRemainingSessions(clientId);
       const c = state.cases[clientId] || {};
+      $('#caseAssignedSpecialist').value = c.assignedSpecialistName || c.specialistName || '';
+      $('#casePaymentReportAmount').value = c.paymentReportAmount || 0;
+      $('#casePaymentReportMethod').value = c.paymentReportMethod || '';
+      $('#caseReceptionNotes').value = c.paymentReportNotes || '';
       $('#caseGapType').value = c.gapType || 'وراثي';
       $('#caseArea').value = c.area || 'مقدمة';
       $('#caseDegree').value = c.degree || 'خفيف';
@@ -1111,8 +1181,14 @@
         sessions_count: Number($('#caseSessions').value || 0),
         total_price: total,
         plan_status: existing?.planStatus || 'draft',
-        specialist_name: state.currentUser?.name || '',
-        specialist_id: state.currentUser?.id || null,
+        specialist_name: state.currentUser?.name || existing?.specialistName || '',
+        specialist_id: state.currentUser?.id || existing?.specialistId || null,
+        assigned_specialist_id: existing?.assignedSpecialistId || state.currentUser?.id || null,
+        assigned_specialist_name: existing?.assignedSpecialistName || state.currentUser?.name || '',
+        payment_report_amount: Number(existing?.paymentReportAmount || 0),
+        payment_report_method: existing?.paymentReportMethod || '',
+        payment_report_notes: existing?.paymentReportNotes || '',
+        payment_report_sent_at: existing?.paymentReportSentAt || null,
         updated_at: new Date().toISOString()
       };
       try {
@@ -1197,6 +1273,8 @@
         await queryOrThrow(
           supabase.from('cases').update({
             plan_status: 'pending_booking',
+            specialist_name: state.currentUser?.name || '',
+            specialist_id: state.currentUser?.id || null,
             sent_to_reception_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }).eq('client_id', clientId),
@@ -1215,13 +1293,44 @@
     function fillBookingCases() {
       const select = $('#bookCase');
       if (!select) return;
-      const pendingCases = Object.values(state.cases)
+
+      const readyForBooking = Object.values(state.cases)
         .filter(c => c.planStatus === 'pending_booking')
         .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
-      select.innerHTML = pendingCases.map(c => {
+
+      const sentToSpecialist = Object.values(state.cases)
+        .filter(c => c.planStatus === 'pending_specialist')
+        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
+
+      const clientsWithoutCase = state.clients
+        .filter(client => !state.cases[client.id])
+        .map(client => ({ clientId: client.id, diagnosis: '', totalPrice: 0, assignedSpecialistName: '', planStatus: 'draft' }))
+        .sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
+
+      const options = [
+        ...readyForBooking,
+        ...sentToSpecialist,
+        ...clientsWithoutCase
+      ];
+
+      const seen = new Set();
+      const uniqueOptions = options.filter(c => {
+        if (seen.has(c.clientId)) return false;
+        seen.add(c.clientId);
+        return true;
+      });
+
+      select.innerHTML = uniqueOptions.map(c => {
         const client = state.clients.find(x => x.id === c.clientId);
-        return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${c.diagnosis || 'بدون تشخيص'} — ${c.totalPrice} ر.س</option>`;
-      }).join('') || `<option value="">لا توجد حالات مرسلة من الأخصائي</option>`;
+        const label = c.planStatus === 'pending_booking'
+          ? 'جاهزة للحجز'
+          : c.planStatus === 'pending_specialist'
+            ? 'مرسلة للأخصائي'
+            : 'عميل جديد';
+        return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${label}</option>`;
+      }).join('') || `<option value="">لا توجد حالات أو عملاء متاحون</option>`;
+
+      fillSpecialistSelect();
       fillBookingCaseDetails();
     }
 
@@ -1231,11 +1340,29 @@
       const client = state.clients.find(x => x.id === clientId);
       $('#bookClientNameView').value = client?.name || '';
       $('#bookDiagnosisView').value = c?.diagnosis || '';
-      $('#bookSpecialistView').value = c?.specialistName || '';
+      $('#bookSpecialistView').value = c?.assignedSpecialistName || c?.specialistName || '';
       $('#bookSessionsCountView').value = c?.sessionsCount || 0;
       $('#bookPricePerSessionView').value = c?.pricePerSession || 0;
       $('#bookTotalView').value = c?.totalPrice || 0;
-      const paid = Number($('#bookPaid').value || 0);
+
+      const specialistSelect = $('#assignSpecialist');
+      if (specialistSelect) {
+        specialistSelect.value = c?.assignedSpecialistId ? String(c.assignedSpecialistId) : '';
+      }
+
+      if (c?.paymentReportAmount) {
+        $('#bookPaid').value = c.paymentReportAmount;
+      }
+
+      if (c?.paymentReportMethod) {
+        $('#bookPayment').value = c.paymentReportMethod;
+      }
+
+      if (c?.paymentReportNotes && !$('#bookNotes').value) {
+        $('#bookNotes').value = c.paymentReportNotes;
+      }
+
+      const paid = Number($('#bookPaid').value || c?.paymentReportAmount || 0);
       $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
     }
 
@@ -1251,14 +1378,69 @@
       $('#bookNotes').value = '';
       $('#bookDate').value = todayStr();
       $('#bookTime').value = '';
+      if ($('#assignSpecialist')) $('#assignSpecialist').value = '';
       fillBookingCases();
+    }
+
+    async function sendCaseToSpecialist() {
+      const clientId = Number($('#bookCase').value);
+      const specialistId = Number($('#assignSpecialist').value);
+      const specialist = state.users.find(u => u.id === specialistId && u.role === 'specialist');
+      const client = state.clients.find(c => c.id === clientId);
+      const existing = state.cases[clientId];
+
+      if (!clientId || !client) {
+        toast('اختر عميلًا أولًا.', 'warn');
+        return;
+      }
+
+      if (!specialistId || !specialist) {
+        toast('اختر الأخصائي المطلوب إرسال الحالة له.', 'warn');
+        return;
+      }
+
+      const payload = {
+        client_id: clientId,
+        gap_type: existing?.gapType || 'وراثي',
+        area: existing?.area || 'مقدمة',
+        degree: existing?.degree || 'خفيف',
+        scalp_type: existing?.scalp || 'دهنية',
+        notes: existing?.notes || '',
+        diagnosis: existing?.diagnosis || '',
+        price_per_session: Number(existing?.pricePerSession || 0),
+        sessions_count: Number(existing?.sessionsCount || 0),
+        total_price: Number(existing?.totalPrice || 0),
+        plan_status: 'pending_specialist',
+        specialist_name: existing?.specialistName || '',
+        specialist_id: existing?.specialistId || null,
+        assigned_specialist_id: specialist.id,
+        assigned_specialist_name: specialist.name,
+        payment_report_amount: Number($('#bookPaid').value || 0),
+        payment_report_method: $('#bookPayment').value,
+        payment_report_notes: $('#bookNotes').value.trim(),
+        payment_report_sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        await queryOrThrow(
+          supabase.from('cases').upsert(payload, { onConflict: 'client_id' }),
+          'Failed sending case to specialist'
+        );
+        addNotification(`تم إرسال حالة العميل ${client.name} إلى الأخصائي ${specialist.name}.`);
+        await loadCases();
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        toast('فشل إرسال الحالة إلى الأخصائي.', 'warn');
+      }
     }
 
     async function saveBooking() {
       const clientId = Number($('#bookCase').value);
       const caseRow = state.cases[clientId];
-      if (!clientId || !caseRow) {
-        toast('اختر حالة مرسلة من الأخصائي أولاً.', 'warn');
+      if (!clientId || !caseRow || caseRow.planStatus !== 'pending_booking') {
+        toast('لا يمكن تأكيد الحجز إلا بعد اعتماد الحالة من الأخصائي.', 'warn');
         return;
       }
       const total = Number(caseRow.totalPrice || 0);
@@ -1474,6 +1656,7 @@
     function renderAll() {
       renderHeader();
       fillClientSelects();
+      fillSpecialistSelect();
       fillBookingCases();
       renderStats();
       renderTimeline();
@@ -1498,9 +1681,14 @@
       $('#clientSearch').oninput = (e) => renderClientsTable(e.target.value);
 
       $('#saveBookingBtn').onclick = saveBooking;
+      $('#sendToSpecialistBtn').onclick = sendCaseToSpecialist;
       $('#todayPhonesBtn').onclick = showTodayPhones;
       $('#markExecutedBtn').onclick = markExecutedFirstToday;
       $('#bookCase').onchange = fillBookingCaseDetails;
+      $('#assignSpecialist').onchange = () => {
+        const specialist = state.users.find(u => u.id == $('#assignSpecialist').value);
+        $('#bookSpecialistView').value = specialist?.name || $('#bookSpecialistView').value;
+      };
       $('#bookPaid').oninput = recalcBookingRemaining;
       $('#bookDate').value = todayStr();
 
