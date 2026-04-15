@@ -164,6 +164,17 @@
     th{background:#f9fbff;color:#7c8ea4;font-size:12px;font-weight:800}
     tbody tr:hover{background:#fbfdff}
     .note{margin-top:14px;padding:14px;border-radius:18px;background:#f8fbff;border:1px solid var(--line);color:#28405d;line-height:1.8;font-size:14px}
+    .clients-shell{display:grid;gap:14px}
+    .clients-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .clients-summary .mini{background:linear-gradient(180deg,#fcfdff,#f6f9ff)}
+    .clients-grid{display:grid;grid-template-columns:.95fr 1.25fr;gap:14px}
+    .panel-soft{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%)}
+    .table-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .subtle{font-size:13px;color:#7b8ca2}
+    .client-form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .list-card-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    @media (max-width:1260px){.clients-grid{grid-template-columns:1fr}.clients-summary{grid-template-columns:1fr 1fr}}
+    @media (max-width:760px){.clients-summary{grid-template-columns:1fr}}
     .badge{display:inline-flex;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800;justify-content:center;align-items:center;min-width:62px}
     .warn{background:#fff3e3;color:#bd6d09}
     .ok{background:#ebfbf4;color:#128255}
@@ -337,45 +348,80 @@
 
         <section class="view hidden" data-view="clients">
           <div class="section-title">
-            <h3>العملاء</h3>
-            <span>إضافة + بحث + تحميل بيانات + عرض الجلسات القادمة</span>
+            <h3>إدارة العملاء</h3>
+            <span>واجهة مرتبة للاستقبال: تسجيل عميل + متابعة سريعة + عرض الجلسات القادمة</span>
           </div>
 
-          <div class="forms">
-            <div class="panel">
-              <div class="section-title">
-                <h3>فتح ملف عميل</h3>
-                <span>للاستقبال + الأدمن</span>
+          <div class="clients-shell">
+            <div class="clients-summary">
+              <div class="mini">
+                <div class="label">إجمالي العملاء</div>
+                <div class="value" id="clientsTotalStat">0</div>
               </div>
-              <div class="form-grid">
-                <div class="field"><label>الاسم الثلاثي</label><input id="clientName" type="text" placeholder="أدخل الاسم الثلاثي" /></div>
-                <div class="field"><label>رقم الجوال</label><input id="clientPhone" type="text" placeholder="05xxxxxxxx" /></div>
-                <div class="field"><label>الجنس</label><select id="clientGender"><option>ذكر</option><option>أنثى</option></select></div>
-                <div class="field"><label>المدينة</label><input id="clientCity" type="text" placeholder="المدينة" /></div>
-                <div class="field"><label>الهوية</label><input id="clientIdno" type="text" placeholder="رقم الهوية" /></div>
-                <div class="field"><label>تاريخ الميلاد</label><input id="clientBirth" type="date" /></div>
-                <div class="field"><label>مصدر العميل</label><select id="clientSource"><option>انستغرام</option><option>سناب</option><option>تيك توك</option><option>واتس اب</option><option>مكالمة</option><option>توصية</option><option>مرور</option></select></div>
-                <div class="field"><label>تاريخ فتح الملف</label><input id="clientOpenDate" type="date" /></div>
+              <div class="mini">
+                <div class="label">عملاء لديهم خطة جلسات</div>
+                <div class="value" id="clientsPlannedStat">0</div>
               </div>
-              <div style="margin-top:16px"><button class="btn btn-primary" id="saveClientBtn" type="button">حفظ الملف</button></div>
+              <div class="mini">
+                <div class="label">عملاء بدون خطة بعد</div>
+                <div class="value" id="clientsNoPlanStat">0</div>
+              </div>
             </div>
 
-            <div class="panel">
-              <div class="section-title">
-                <h3>قائمة العملاء</h3>
-                <span>بحث وتحديث مباشر</span>
+            <div class="clients-grid">
+              <div class="panel panel-soft">
+                <div class="list-card-head">
+                  <div>
+                    <h3 style="margin:0;font-size:21px;font-weight:800">فتح ملف عميل</h3>
+                    <div class="subtle">تسجيل البيانات الأساسية بشكل مرتب وواضح</div>
+                  </div>
+                  <span class="badge draft">الاستقبال + الأدمن</span>
+                </div>
+
+                <div class="form-grid">
+                  <div class="field"><label>الاسم الثلاثي</label><input id="clientName" type="text" placeholder="أدخل الاسم الثلاثي" /></div>
+                  <div class="field"><label>رقم الجوال</label><input id="clientPhone" type="text" placeholder="05xxxxxxxx" /></div>
+                  <div class="field"><label>الجنس</label><select id="clientGender"><option>ذكر</option><option>أنثى</option></select></div>
+                  <div class="field"><label>المدينة</label><input id="clientCity" type="text" placeholder="المدينة" /></div>
+                  <div class="field"><label>رقم الهوية</label><input id="clientIdno" type="text" placeholder="رقم الهوية" /></div>
+                  <div class="field"><label>تاريخ الميلاد</label><input id="clientBirth" type="date" /></div>
+                  <div class="field"><label>مصدر العميل</label><select id="clientSource"><option>انستغرام</option><option>سناب</option><option>تيك توك</option><option>واتس اب</option><option>مكالمة</option><option>توصية</option><option>مرور</option></select></div>
+                  <div class="field"><label>تاريخ فتح الملف</label><input id="clientOpenDate" type="date" /></div>
+                </div>
+
+                <div class="client-form-actions">
+                  <button class="btn btn-primary" id="saveClientBtn" type="button">حفظ الملف</button>
+                  <button class="btn btn-outline" id="clearClientFormBtn" type="button">تفريغ الحقول</button>
+                </div>
+
+                <div class="note">بعد حفظ الملف يمكنك تحميل بيانات العميل من القائمة يمين الصفحة، ومراجعة عدد الجلسات والمواعيد القادمة مباشرة.</div>
               </div>
-              <div class="toolbar">
-                <input class="search" id="clientSearch" type="text" placeholder="ابحث بالاسم أو الجوال" />
-                <button class="btn btn-soft" id="refreshClientsBtn" type="button">تحديث القائمة</button>
-              </div>
-              <div class="table-wrap" style="margin-top:14px">
-                <table>
-                  <thead>
-                    <tr><th>الاسم</th><th>الجوال</th><th>المدينة</th><th>المصدر</th><th>عدد الجلسات</th><th>مواعيد الجلسات القادمة</th><th>الإجراءات</th></tr>
-                  </thead>
-                  <tbody id="clientsTable"></tbody>
-                </table>
+
+              <div class="panel panel-soft">
+                <div class="list-card-head">
+                  <div>
+                    <h3 style="margin:0;font-size:21px;font-weight:800">قائمة العملاء</h3>
+                    <div class="subtle">ابحث بسرعة ثم افتح ملف العميل أو راجع خطة الجلسات القادمة</div>
+                  </div>
+                  <span class="badge ok">تحديث مباشر</span>
+                </div>
+
+                <div class="table-toolbar">
+                  <input class="search" id="clientSearch" type="text" placeholder="ابحث بالاسم أو الجوال" />
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-soft" id="refreshClientsBtn" type="button">تحديث القائمة</button>
+                    <button class="btn btn-outline" id="todayClientOpenBtn" type="button">المضافون اليوم</button>
+                  </div>
+                </div>
+
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>الاسم</th><th>الجوال</th><th>المدينة</th><th>المصدر</th><th>عدد الجلسات</th><th>مواعيد الجلسات القادمة</th><th>الإجراءات</th></tr>
+                    </thead>
+                    <tbody id="clientsTable"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -1274,6 +1320,49 @@
       $$('[data-client-edit]').forEach(btn => btn.onclick = () => loadClientIntoForm(Number(btn.dataset.clientEdit)));
     }
 
+    function clearClientForm() {
+      $('#clientName').value = '';
+      $('#clientPhone').value = '';
+      $('#clientGender').value = 'ذكر';
+      $('#clientCity').value = '';
+      $('#clientIdno').value = '';
+      $('#clientBirth').value = '';
+      $('#clientSource').value = 'انستغرام';
+      $('#clientOpenDate').value = todayStr();
+    }
+
+    function renderClientsOverview() {
+      const total = state.clients.length;
+      const planned = state.clients.filter(c => Number(state.cases[c.id]?.sessionsCount || 0) > 0).length;
+      const noPlan = Math.max(0, total - planned);
+
+      if ($('#clientsTotalStat')) $('#clientsTotalStat').textContent = total;
+      if ($('#clientsPlannedStat')) $('#clientsPlannedStat').textContent = planned;
+      if ($('#clientsNoPlanStat')) $('#clientsNoPlanStat').textContent = noPlan;
+    }
+
+    function showTodayClients() {
+      const today = todayStr();
+      renderClientsTable('');
+      const rows = state.clients.filter(c => c.openDate === today);
+      $('#clientsTable').innerHTML = rows.map(c => {
+        const caseRow = state.cases[c.id] || {};
+        const sessionsCount = Number(caseRow.sessionsCount || 0);
+        const scheduleHtml = schedulePreviewHtml(caseRow.nextSessionsSchedule || '');
+        return `
+        <tr>
+          <td>${c.name}</td>
+          <td>${c.phone}</td>
+          <td>${c.city}</td>
+          <td>${c.source}</td>
+          <td>${sessionsCount || '-'}</td>
+          <td style="white-space:normal;min-width:220px;line-height:1.8">${scheduleHtml}</td>
+          <td><button class="btn btn-soft" data-client-edit="${c.id}" type="button">تحميل</button></td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="7">لا يوجد عملاء مضافون اليوم</td></tr>`;
+      $$('[data-client-edit]').forEach(btn => btn.onclick = () => loadClientIntoForm(Number(btn.dataset.clientEdit)));
+    }
+
     function loadClientIntoForm(id) {
       const c = state.clients.find(x => x.id === id);
       if (!c) return;
@@ -1308,6 +1397,7 @@
         await queryOrThrow(supabase.from('clients').insert([data]), 'Failed saving client');
         addNotification(`تم فتح ملف العميل ${data.full_name}`);
         await loadClients();
+        clearClientForm();
         renderAll();
       } catch (err) {
         console.error(err);
