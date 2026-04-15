@@ -400,7 +400,9 @@
                 <div class="field"><label>سعر الجلسة</label><input id="bookPricePerSessionView" type="number" readonly /></div>
                 <div class="field"><label>الإجمالي</label><input id="bookTotalView" type="number" readonly /></div>
                 <div class="field"><label>المدفوع</label><input id="bookPaid" type="number" placeholder="0" /></div>
+                <div class="field"><label>تم سداد أي جلسة؟</label><select id="bookPaidForSession"></select></div>
                 <div class="field"><label>المتبقي</label><input id="bookRemaining" type="number" readonly /></div>
+                <div class="field"><label>موعد الجلسة القادمة</label><input id="bookNextScheduledSession" type="text" readonly /></div>
                 <div class="field"><label>طريقة الدفع</label><select id="bookPayment"><option>شبكة</option><option>كاش</option><option>تقسيط</option></select></div>
                 <div class="field"><label>حالة الحضور</label><select id="bookAttendance"><option>بانتظار الموعد</option><option>حضر</option><option>لم يحضر</option></select></div>
                 <div class="field"><label>إرفاق إيصال الدفع</label><input id="bookPaymentReceipt" type="file" accept="image/*,.pdf" multiple /></div>
@@ -456,12 +458,12 @@
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة المجدولة</th><th>البداية الفعلية</th><th>النهاية الفعلية</th><th>المدة الفعلية</th><th>فرق البداية</th><th>الحضور</th><th>الحالة</th><th>الإجراءات</th></tr>
+                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>تم سداد جلسة</th><th>موعد الجلسة القادمة</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة المجدولة</th><th>البداية الفعلية</th><th>النهاية الفعلية</th><th>المدة الفعلية</th><th>فرق البداية</th><th>الحضور</th><th>الحالة</th><th>الإجراءات</th></tr>
                   </thead>
                   <tbody id="bookingsTable"></tbody>
                 </table>
               </div>
-              <div class="note">الحجز من عند الاستقبال مباشرة، ولا تذهب الحالة للأخصائي إلا إذا ضغط الاستقبال على إرسال للأخصائي.</div>
+              <div class="note">الحجز من عند الاستقبال مباشرة، ولا تذهب الحالة للأخصائي إلا إذا ضغط الاستقبال على إرسال للأخصائي. كما يمكن تحديد هل السداد كان للجلسة الأولى أو الثانية أو الثالثة، وسيظهر موعد الجلسة القادمة تلقائيًا إذا حدده الأخصائي.</div>
             </div>
           </div>
         </section>
@@ -800,7 +802,18 @@
       };
     }
 
+    function getBookingMetaFromNotes(notes) {
+      const text = String(notes || '');
+      const paidMatch = text.match(/سداد الجلسة:\s*([^|\n]+)/);
+      const nextMatch = text.match(/موعد الجلسة القادمة:\s*([^|\n]+)/);
+      return {
+        paidForSessionLabel: paidMatch ? paidMatch[1].trim() : '-',
+        nextScheduledSession: nextMatch ? nextMatch[1].trim() : '-'
+      };
+    }
+
     function mapBooking(row) {
+      const meta = getBookingMetaFromNotes(row.notes || '');
       return {
         id: row.id,
         clientId: row.client_id,
@@ -821,6 +834,8 @@
         remaining: Number(row.remaining || 0),
         payment: row.payment_method || 'شبكة',
         notes: row.notes || '',
+        paidForSessionLabel: meta.paidForSessionLabel,
+        nextScheduledSession: meta.nextScheduledSession,
         status: row.status === 'confirmed' ? 'مؤكد' : row.status === 'executed' ? 'منفذ' : row.status === 'in_progress' ? 'قيد التنفيذ' : row.status === 'cancelled' ? 'ملغي' : (row.status || 'مؤكد')
       };
     }
@@ -1284,6 +1299,65 @@
       return lines.length > 3 ? shown + '<br>…' : shown;
     }
 
+    function sessionNumberToLabel(n) {
+      const labels = {
+        1: 'الجلسة الأولى',
+        2: 'الجلسة الثانية',
+        3: 'الجلسة الثالثة',
+        4: 'الجلسة الرابعة',
+        5: 'الجلسة الخامسة',
+        6: 'الجلسة السادسة',
+        7: 'الجلسة السابعة',
+        8: 'الجلسة الثامنة'
+      };
+      return labels[n] || `الجلسة ${n}`;
+    }
+
+    function parseNextSessionsLines(scheduleText) {
+      return normalizeScheduleText(scheduleText)
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+    }
+
+    function getSessionPaymentOptions(totalSessions) {
+      const count = Math.max(0, Number(totalSessions || 0));
+      if (count <= 0) return ['<option value="">حدد الجلسة المسددة</option>'];
+      const options = ['<option value="">حدد الجلسة المسددة</option>'];
+      for (let i = 1; i <= count; i++) {
+        options.push(`<option value="${i}">${sessionNumberToLabel(i)}</option>`);
+      }
+      return options;
+    }
+
+    function findNextScheduledSession(caseRow, paidSessionNumber) {
+      const lines = parseNextSessionsLines(caseRow?.nextSessionsSchedule || '');
+      const nextNum = Number(paidSessionNumber || 0) + 1;
+      if (!lines.length) return '-';
+      const exact = lines.find(line => line.includes(`جلسة ${nextNum}`) || line.includes(`الجلسة ${nextNum}`) || line.includes(`${nextNum}:`));
+      return exact || (nextNum <= 1 ? lines[0] : '-');
+    }
+
+    function updateReceptionSessionPaymentFields() {
+      const clientId = Number($('#bookCase')?.value || 0);
+      const caseRow = state.cases[clientId];
+      const selector = $('#bookPaidForSession');
+      const nextField = $('#bookNextScheduledSession');
+      if (!selector || !nextField) return;
+
+      selector.innerHTML = getSessionPaymentOptions(caseRow?.sessionsCount || 0).join('');
+      const currentValue = Number(selector.dataset.keepValue || 0);
+      if (currentValue && currentValue <= Number(caseRow?.sessionsCount || 0)) {
+        selector.value = String(currentValue);
+      } else if (Number(caseRow?.sessionsCount || 0) > 0) {
+        selector.value = '1';
+      }
+
+      const nextLine = findNextScheduledSession(caseRow, Number(selector.value || 0));
+      nextField.value = nextLine === '-' ? 'لا يوجد موعد قادم محدد' : nextLine;
+      delete selector.dataset.keepValue;
+    }
+
 
     function renderAttachmentsTable(clientId) {
       const caseRow = state.cases[clientId];
@@ -1601,6 +1675,8 @@
       $('#bookTotalView').value = c?.totalPrice || 0;
       $('#bookService').value = $('#bookService').value || 'جلسة أولى';
       $('#bookAttendance').value = 'بانتظار الموعد';
+      if ($('#bookPaidForSession')) $('#bookPaidForSession').dataset.keepValue = '1';
+      updateReceptionSessionPaymentFields();
 
       const specialistSelect = $('#assignSpecialist');
       if (specialistSelect) {
@@ -1609,9 +1685,12 @@
 
       // تصفير الحقول أولًا حتى لا تنتقل قيمة العميل السابق للعميل الحالي
       $('#bookPaid').value = '';
+      if ($('#bookPaidForSession')) $('#bookPaidForSession').innerHTML = '<option value="">حدد الجلسة المسددة</option>';
+      if ($('#bookNextScheduledSession')) $('#bookNextScheduledSession').value = '';
       $('#bookRemaining').value = '';
       $('#bookPayment').value = 'شبكة';
       $('#bookNotes').value = '';
+      if ($('#bookPaidForSession')) $('#bookPaidForSession').dataset.keepValue = '1';
 
       // تعبئة بيانات الدفع فقط إذا كانت محفوظة للحالة الحالية
       if (c && c.paymentReportAmount != null) {
@@ -1629,6 +1708,7 @@
       renderPaymentReceiptsTable(clientId);
       const paid = Number($('#bookPaid').value || 0);
       $('#bookRemaining').value = Math.max(0, Number(c?.totalPrice || 0) - paid);
+      updateReceptionSessionPaymentFields();
       calculateBookingEndTime();
     }
 
@@ -1640,6 +1720,8 @@
 
     function clearBookingForm() {
       $('#bookPaid').value = '';
+      if ($('#bookPaidForSession')) $('#bookPaidForSession').innerHTML = '<option value="">حدد الجلسة المسددة</option>';
+      if ($('#bookNextScheduledSession')) $('#bookNextScheduledSession').value = '';
       $('#bookRemaining').value = '';
       $('#bookNotes').value = '';
       $('#bookAttendance').value = 'بانتظار الموعد';
@@ -1802,6 +1884,9 @@
 
       const total = Number(caseRow?.totalPrice || 0);
       const paid = Number($('#bookPaid').value || 0);
+      const paidSessionNumber = Number($('#bookPaidForSession')?.value || 0);
+      const paidSessionLabel = paidSessionNumber ? sessionNumberToLabel(paidSessionNumber) : '-';
+      const nextScheduledSession = findNextScheduledSession(caseRow, paidSessionNumber);
       const remaining = Math.max(0, total - paid);
 
       const b = {
@@ -1823,6 +1908,8 @@
           `التشخيص: ${caseRow?.diagnosis || '-'}`,
           `عدد الجلسات: ${caseRow?.sessionsCount || 0}`,
           `سعر الجلسة: ${caseRow?.pricePerSession || 0}`,
+          `سداد الجلسة: ${paidSessionLabel}`,
+          `موعد الجلسة القادمة: ${nextScheduledSession === '-' ? 'غير محدد' : nextScheduledSession}`,
           $('#bookNotes').value.trim()
         ].filter(Boolean).join(' | '),
         status: $('#bookAttendance').value === 'حضر' && $('#bookService').value !== 'استشارة فقط' ? 'executed' : 'confirmed'
@@ -1934,6 +2021,8 @@
             <td>${b.service || '-'}</td>
             <td>${total.toLocaleString('ar-SA')} ر.س</td>
             <td>${Number(b.paid || 0).toLocaleString('ar-SA')} ر.س</td>
+            <td>${b.paidForSessionLabel || '-'}</td>
+            <td style="white-space:normal;min-width:220px;line-height:1.8">${b.nextScheduledSession || '-'}</td>
             <td>${Number(b.remaining || 0).toLocaleString('ar-SA')} ر.س</td>
             <td>${remainingSessions}</td>
             <td>${sessionBadge(caseRow, executed)}</td>
@@ -1956,7 +2045,7 @@
               </div>
             </td>
           </tr>`;
-      }).join('') || `<tr><td colspan="20">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="22">لا توجد مواعيد</td></tr>`;
 
       $$('[data-attend-booking]').forEach(btn => btn.onclick = () => updateBookingAttendance(Number(btn.dataset.attendBooking), btn.dataset.attendance));
       $$('[data-start-booking]').forEach(btn => btn.onclick = () => startBookingSession(Number(btn.dataset.startBooking)));
