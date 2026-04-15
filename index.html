@@ -1022,7 +1022,11 @@
         btn.style.display = show ? 'flex' : 'none';
         btn.classList.remove('active');
       });
-      $('#quickClientBtn').style.display = role === 'specialist' ? 'none' : 'inline-flex';
+      const specialistHidden = role === 'specialist';
+      ['#quickClientBtn', '#quickBookBtn', '#quickTodayBtn'].forEach(sel => {
+        const el = $(sel);
+        if (el) el.style.display = specialistHidden ? 'none' : 'inline-flex';
+      });
       ['#invName','#invQty','#invMin','#invNotes','#saveInventoryBtn'].forEach(sel => { const el = $(sel); if (el) el.disabled = role !== 'admin'; });
       const first = $$('#menuNav button').find(btn => btn.style.display !== 'none');
       if (first) {
@@ -1312,7 +1316,7 @@
 
       let caseEntries = Object.values(state.cases);
       if (state.currentUser?.role === 'specialist') {
-        caseEntries = caseEntries.filter(c => c.assignedSpecialistId == state.currentUser.id || c.specialistId == state.currentUser.id);
+        caseEntries = caseEntries.filter(c => Number(c.assignedSpecialistId) === Number(state.currentUser.id));
       }
 
       caseEntries = caseEntries.sort((a, b) => (b.clientId || 0) - (a.clientId || 0));
@@ -1320,7 +1324,7 @@
       select.innerHTML = caseEntries.map(c => {
         const client = state.clients.find(x => x.id === c.clientId);
         return `<option value="${c.clientId}">${client?.name || 'عميل'} — ${caseStatusLabel(c.planStatus)}</option>`;
-      }).join('') || '<option value="">لا توجد حالات مخصصة لك</option>';
+      }).join('') || '<option value="">لا توجد حالات مرسلة لك</option>';
 
       const fallbackId = Number(select.value || caseEntries[0]?.clientId || 0);
       const clientId = Number(select.value || fallbackId);
