@@ -458,12 +458,12 @@
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>تم سداد جلسة</th><th>موعد الجلسة القادمة</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة المجدولة</th><th>البداية الفعلية</th><th>النهاية الفعلية</th><th>المدة الفعلية</th><th>فرق البداية</th><th>الحضور</th><th>الحالة</th><th>الإجراءات</th></tr>
+                    <tr><th>العميل</th><th>التشخيص</th><th>الأخصائي</th><th>نوع الخدمة</th><th>الإجمالي</th><th>المدفوع</th><th>تم سداد جلسة</th><th>موعد الجلسة القادمة</th><th>المتبقي المالي</th><th>الجلسات المتبقية</th><th>تفصيل انتهاء الجلسات</th><th>حالة الجلسات</th><th>التاريخ</th><th>وقت البداية</th><th>وقت الانتهاء</th><th>المدة المجدولة</th><th>البداية الفعلية</th><th>النهاية الفعلية</th><th>المدة الفعلية</th><th>فرق البداية</th><th>الحضور</th><th>الحالة</th><th>الإجراءات</th></tr>
                   </thead>
                   <tbody id="bookingsTable"></tbody>
                 </table>
               </div>
-              <div class="note">الحجز من عند الاستقبال مباشرة، ولا تذهب الحالة للأخصائي إلا إذا ضغط الاستقبال على إرسال للأخصائي. كما يمكن تحديد هل السداد كان للجلسة الأولى أو الثانية أو الثالثة، وسيظهر موعد الجلسة القادمة تلقائيًا إذا حدده الأخصائي.</div>
+              <div class="note">الحجز من عند الاستقبال مباشرة، ولا تذهب الحالة للأخصائي إلا إذا ضغط الاستقبال على إرسال للأخصائي. كما يمكن تحديد هل السداد كان للجلسة الأولى أو الثانية أو الثالثة، وسيظهر موعد الجلسة القادمة تلقائيًا إذا حدده الأخصائي. وسيظهر أيضًا تفصيل واضح لانتهاء الجلسات الأولى والثانية والثالثة، وتُغلق الحالة تلقائيًا عند اكتمال جميع الجلسات.</div>
             </div>
           </div>
         </section>
@@ -1113,6 +1113,84 @@
     function executedSessions(clientId) { return state.bookings.filter(b => b.clientId === clientId && b.status === 'منفذ').length; }
     function clientRemainingSessions(clientId) { return Math.max(0, totalSessions(clientId) - executedSessions(clientId)); }
 
+    function sessionNumberArabicLabel(n) {
+      const labels = {
+        1: 'الأولى',
+        2: 'الثانية',
+        3: 'الثالثة',
+        4: 'الرابعة',
+        5: 'الخامسة',
+        6: 'السادسة',
+        7: 'السابعة',
+        8: 'الثامنة'
+      };
+      return labels[n] || String(n);
+    }
+
+    function getCaseExecutedSessions(clientId) {
+      return state.bookings.filter(b => b.clientId === clientId && b.status === 'منفذ').length;
+    }
+
+    function getSessionsStatusSummary(caseRow, clientId) {
+      const total = Number(caseRow?.sessionsCount || 0);
+      const executed = getCaseExecutedSessions(clientId);
+
+      if (total <= 0) return 'لا توجد جلسات محددة';
+
+      const lines = [];
+      for (let i = 1; i <= total; i++) {
+        if (i <= executed) {
+          lines.push(`✅ تم انتهاء الجلسة ${sessionNumberArabicLabel(i)}`);
+        } else {
+          lines.push(`⏳ الجلسة ${sessionNumberArabicLabel(i)} لم تتم`);
+        }
+      }
+
+      if (executed >= total) {
+        lines.push('🎉 الحالة مكتملة');
+      }
+
+      return lines.join('<br>');
+    }
+
+    async function updateCaseCompletionStatus(clientId) {
+      const caseRow = state.cases[clientId];
+      if (!caseRow) return;
+
+      const total = Number(caseRow.sessionsCount || 0);
+      const executed = getCaseExecutedSessions(clientId);
+
+      let nextStatus = caseRow.planStatus || 'draft';
+      if (total > 0 && executed >= total) {
+        nextStatus = 'completed';
+      } else if (caseRow.planStatus === 'completed' && executed < total) {
+        nextStatus = 'booked';
+      }
+
+      if (nextStatus === caseRow.planStatus) return;
+
+      try {
+        await queryOrThrow(
+          supabase
+            .from('cases')
+            .update({
+              plan_status: nextStatus,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', caseRow.id),
+          'Failed updating case completion status'
+        );
+
+        state.cases[clientId] = { ...caseRow, planStatus: nextStatus };
+        if (nextStatus === 'completed') {
+          addNotification(`تم إغلاق الحالة واكتمال جميع الجلسات للعميل ${state.clients.find(c => c.id === clientId)?.name || ''}`);
+        }
+      } catch (err) {
+        console.error(err);
+        toast('تعذر تحديث حالة اكتمال الجلسات.', 'warn');
+      }
+    }
+
     function computeStats() {
       const totalClients = state.clients.length;
       const doneClients = state.clients.filter(c => clientRemainingSessions(c.id) === 0 && totalSessions(c.id) > 0).length;
@@ -1259,6 +1337,7 @@
       if (status === 'pending_specialist') return 'بانتظار الأخصائي';
       if (status === 'pending_booking') return 'بانتظار الاستقبال';
       if (status === 'booked') return 'تم الحجز';
+      if (status === 'completed') return 'مكتملة';
       return 'مسودة';
     }
 
@@ -2045,7 +2124,7 @@
               </div>
             </td>
           </tr>`;
-      }).join('') || `<tr><td colspan="22">لا توجد مواعيد</td></tr>`;
+      }).join('') || `<tr><td colspan="23">لا توجد مواعيد</td></tr>`;
 
       $$('[data-attend-booking]').forEach(btn => btn.onclick = () => updateBookingAttendance(Number(btn.dataset.attendBooking), btn.dataset.attendance));
       $$('[data-start-booking]').forEach(btn => btn.onclick = () => startBookingSession(Number(btn.dataset.startBooking)));
