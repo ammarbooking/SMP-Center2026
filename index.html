@@ -257,7 +257,7 @@
           <button data-view="team" type="button"><span>أداء الفريق</span><small>▤</small></button>
           <button data-view="inventory" type="button"><span>المخزون</span><small>◫</small></button>
           <button data-view="users" type="button"><span>المستخدمون</span><small>⚙</small></button>
-        <button data-view="expenses" type="button"><span>المصروفات</span><small>💸</small></button></nav>
+        <button data-view="expenses" type="button"><span>المصاريف التشغيلية</span><small>💸</small></button></nav>
 
         <div class="side-card">
           <h4>ملخص اليوم</h4>
@@ -338,7 +338,7 @@
         <section class="view hidden" data-view="clients">
           <div class="section-title">
             <h3>العملاء</h3>
-            <span>إضافة + بحث + تحميل بيانات</span>
+            <span>إضافة + بحث + تحميل بيانات + عرض الجلسات القادمة</span>
           </div>
 
           <div class="forms">
@@ -372,7 +372,7 @@
               <div class="table-wrap" style="margin-top:14px">
                 <table>
                   <thead>
-                    <tr><th>الاسم</th><th>الجوال</th><th>المدينة</th><th>المصدر</th><th>الإجراءات</th></tr>
+                    <tr><th>الاسم</th><th>الجوال</th><th>المدينة</th><th>المصدر</th><th>عدد الجلسات</th><th>مواعيد الجلسات القادمة</th><th>الإجراءات</th></tr>
                   </thead>
                   <tbody id="clientsTable"></tbody>
                 </table>
@@ -490,6 +490,7 @@
               <div class="field"><label>سعر الجلسة</label><input id="casePrice" type="number" placeholder="0" /></div>
               <div class="field"><label>عدد الجلسات</label><input id="caseSessions" type="number" placeholder="0" /></div>
               <div class="field"><label>الإجمالي</label><input id="caseTotal" type="number" readonly /></div>
+              <div class="field full"><label>مواعيد الجلسات القادمة</label><textarea id="caseNextSessions" placeholder="اكتب مواعيد الجلسات القادمة سطرًا بسطر&#10;مثال:&#10;جلسة 2: 2026-04-20 06:00 م&#10;جلسة 3: 2026-04-27 06:00 م"></textarea></div>
               <div class="field"><label>حالة الخطة</label><input id="casePlanStatusView" type="text" readonly /></div>
               <div class="field full"><label>ملاحظات الأخصائي</label><textarea id="caseNotes"></textarea></div>
               <div class="field full"><label>إرفاق صور / إقرارات</label><input id="caseAttachments" type="file" multiple accept="image/*,.pdf" /></div>
@@ -619,25 +620,25 @@
   <div class="forms">
     <div class="panel">
       <div class="section-title">
-        <h3>إضافة مصروف</h3>
+        <h3>إضافة مصروف تشغيلي</h3>
       </div>
       <div class="form-grid">
-        <div class="field"><label>نوع المصروف</label><input id="expType" type="text"></div>
-        <div class="field"><label>المبلغ</label><input id="expAmount" type="number"></div>
-        <div class="field"><label>التاريخ</label><input id="expDate" type="date"></div>
-        <div class="field full"><label>ملاحظات</label><textarea id="expNotes"></textarea></div>
+        <div class="field"><label>بند المصروف التشغيلي</label><input id="expType" type="text" placeholder="مثال: إيجار / كهرباء / رواتب / مستلزمات"></div>
+        <div class="field"><label>المبلغ المصروف</label><input id="expAmount" type="number" placeholder="0"></div>
+        <div class="field"><label>تاريخ الصرف</label><input id="expDate" type="date"></div>
+        <div class="field full"><label>تفاصيل أو ملاحظات</label><textarea id="expNotes" placeholder="اكتب سبب المصروف أو أي تفاصيل إضافية"></textarea></div>
       </div>
-      <button class="btn btn-primary" id="saveExpenseBtn">حفظ المصروف</button>
+      <div class="note" style="margin:12px 0 16px">هذا القسم مخصص لتسجيل المصاريف التشغيلية اليومية للمركز، ومتاحة للأدمن فقط.</div><button class="btn btn-primary" id="saveExpenseBtn">حفظ المصروف التشغيلي</button>
     </div>
 
     <div class="panel">
       <div class="section-title">
-        <h3>سجل المصروفات</h3>
+        <h3>سجل المصاريف التشغيلية</h3>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>النوع</th><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th></tr>
+            <tr><th>بند المصروف</th><th>المبلغ</th><th>تاريخ الصرف</th><th>ملاحظات</th></tr>
           </thead>
           <tbody id="expensesTable"></tbody>
         </table>
@@ -677,6 +678,7 @@
       inventory: [],
       users: [],
       attachments: [],
+      expenses: [],
       bookingFilters: {
         search: '',
         status: '',
@@ -848,7 +850,8 @@
         paymentReportSentAt: row.payment_report_sent_at || null,
         consumablesJson: row.consumables_json || '[]',
         inventoryDeductedAt: row.inventory_deducted_at || null,
-        sentToReceptionAt: row.sent_to_reception_at || null
+        sentToReceptionAt: row.sent_to_reception_at || null,
+        nextSessionsSchedule: row.next_sessions_schedule || ''
       };
     }
 
@@ -933,9 +936,23 @@
       state.attachments = data.map(mapAttachment);
     }
 
+    async function loadExpenses() {
+      try {
+        const data = await queryOrThrow(
+          supabase.from('expenses').select('*').order('date', { ascending: false }).order('id', { ascending: false }),
+          'Failed loading expenses'
+        );
+        state.expenses = data || [];
+      } catch (err) {
+        console.error(err);
+        state.expenses = [];
+      }
+    }
+
+
     async function loadAllData(showSuccess = false) {
       try {
-        await Promise.all([loadUsers(), loadClients(), loadBookings(), loadCases(), loadInventory(), loadAttachments()]);
+        await Promise.all([loadUsers(), loadClients(), loadBookings(), loadCases(), loadInventory(), loadAttachments(), loadExpenses()]);
         renderQuickUsers();
         if (showSuccess) toast('تم تحديث البيانات من قاعدة البيانات.');
       } catch (err) {
@@ -1012,7 +1029,7 @@
     function applyRoleVisibility() {
       const role = state.currentUser?.role;
       const map = {
-        admin: ['dashboard', 'stats', 'clients', 'booking', 'specialist', 'team', 'inventory', 'users'],
+        admin: ['dashboard', 'stats', 'clients', 'booking', 'specialist', 'team', 'inventory', 'users', 'expenses'],
         reception: ['dashboard', 'stats', 'clients', 'booking'],
         specialist: ['dashboard', 'specialist']
       };
@@ -1027,7 +1044,7 @@
         const el = $(sel);
         if (el) el.style.display = specialistHidden ? 'none' : 'inline-flex';
       });
-      ['#invName','#invQty','#invMin','#invNotes','#saveInventoryBtn'].forEach(sel => { const el = $(sel); if (el) el.disabled = role !== 'admin'; });
+      ['#invName','#invQty','#invMin','#invNotes','#saveInventoryBtn','#expType','#expAmount','#expDate','#expNotes','#saveExpenseBtn'].forEach(sel => { const el = $(sel); if (el) el.disabled = role !== 'admin'; });
       const first = $$('#menuNav button').find(btn => btn.style.display !== 'none');
       if (first) {
         first.classList.add('active');
@@ -1146,14 +1163,21 @@
     function renderClientsTable(filter = '') {
       const f = filter.trim();
       const rows = state.clients.filter(c => !f || c.name.includes(f) || c.phone.includes(f));
-      $('#clientsTable').innerHTML = rows.map(c => `
+      $('#clientsTable').innerHTML = rows.map(c => {
+        const caseRow = state.cases[c.id] || {};
+        const sessionsCount = Number(caseRow.sessionsCount || 0);
+        const scheduleHtml = schedulePreviewHtml(caseRow.nextSessionsSchedule || '');
+        return `
         <tr>
           <td>${c.name}</td>
           <td>${c.phone}</td>
           <td>${c.city}</td>
           <td>${c.source}</td>
+          <td>${sessionsCount || '-'}</td>
+          <td style="white-space:normal;min-width:220px;line-height:1.8">${scheduleHtml}</td>
           <td><button class="btn btn-soft" data-client-edit="${c.id}" type="button">تحميل</button></td>
-        </tr>`).join('') || `<tr><td colspan="5">لا توجد نتائج</td></tr>`;
+        </tr>`;
+      }).join('') || `<tr><td colspan="7">لا توجد نتائج</td></tr>`;
       $$('[data-client-edit]').forEach(btn => btn.onclick = () => loadClientIntoForm(Number(btn.dataset.clientEdit)));
     }
 
@@ -1249,6 +1273,18 @@
       return total;
     }
 
+    function normalizeScheduleText(value) {
+      return String(value || '').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+    }
+
+    function schedulePreviewHtml(value) {
+      const lines = normalizeScheduleText(value).split('\n').filter(Boolean);
+      if (!lines.length) return '-';
+      const shown = lines.slice(0, 3).join('<br>');
+      return lines.length > 3 ? shown + '<br>…' : shown;
+    }
+
+
     function renderAttachmentsTable(clientId) {
       const caseRow = state.cases[clientId];
       const rows = state.attachments.filter(a => a.clientId === clientId && (!caseRow?.id || a.caseId === caseRow.id || a.caseId));
@@ -1297,6 +1333,7 @@
         '#caseDiagnosis',
         '#casePrice',
         '#caseSessions',
+        '#caseNextSessions',
         '#caseNotes',
         '#caseAttachments',
         '#useInventoryItem',
@@ -1346,6 +1383,7 @@
         $('#casePrice').value = 0;
         $('#caseSessions').value = 0;
         $('#caseTotal').value = 0;
+        $('#caseNextSessions').value = '';
         $('#casePlanStatusView').value = 'لا توجد حالات';
         renderAttachmentsTable(0);
         applyCasePermissions(null);
@@ -1373,6 +1411,7 @@
       $('#casePrice').value = c.pricePerSession || 0;
       $('#caseSessions').value = c.sessionsCount || 0;
       $('#caseTotal').value = c.totalPrice || 0;
+      $('#caseNextSessions').value = c.nextSessionsSchedule || '';
       $('#casePlanStatusView').value = caseStatusLabel(c.planStatus || 'draft');
       renderAttachmentsTable(clientId);
       renderCaseInventoryAvailable();
@@ -1415,12 +1454,13 @@
         payment_report_sent_at: existing?.paymentReportSentAt || null,
         consumables_json: existing?.consumablesJson || '[]',
         inventory_deducted_at: existing?.inventoryDeductedAt || null,
+        next_sessions_schedule: normalizeScheduleText($('#caseNextSessions').value),
         updated_at: new Date().toISOString()
       };
       try {
         await queryOrThrow(supabase.from('cases').upsert(payload, { onConflict: 'client_id' }), 'Failed saving case');
         const client = state.clients.find(c => c.id === clientId);
-        addNotification(`تم حفظ خطة الحالة للعميل ${client?.name || ''}`);
+        addNotification(`تم حفظ خطة الحالة والجلسات القادمة للعميل ${client?.name || ''}`);
         await loadCases();
         await loadAttachments();
         renderAll();
@@ -2278,6 +2318,59 @@
       }
     }
 
+
+    function renderExpenses() {
+      const tbody = $('#expensesTable');
+      if (!tbody) return;
+      if (state.currentUser?.role !== 'admin') {
+        tbody.innerHTML = '<tr><td colspan="4">قسم المصاريف التشغيلية متاح للأدمن فقط</td></tr>';
+        return;
+      }
+      tbody.innerHTML = (state.expenses || []).map(e => `
+        <tr>
+          <td>${e.type || '-'}</td>
+          <td>${Number(e.amount || 0).toLocaleString('ar-SA')}</td>
+          <td>${formatDateDisplay(e.date)}</td>
+          <td>${e.notes || '-'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4">لا توجد مصروفات مسجلة</td></tr>';
+    }
+
+    async function saveExpense() {
+      if (state.currentUser?.role !== 'admin') {
+        toast('المصاريف التشغيلية متاحة للأدمن فقط.', 'warn');
+        return;
+      }
+
+      const payload = {
+        type: $('#expType')?.value.trim(),
+        amount: Number($('#expAmount')?.value || 0),
+        date: $('#expDate')?.value || todayStr(),
+        notes: $('#expNotes')?.value.trim() || ''
+      };
+
+      if (!payload.type || !payload.amount) {
+        toast('أدخل بند المصروف التشغيلي والمبلغ.', 'warn');
+        return;
+      }
+
+      try {
+        await queryOrThrow(supabase.from('expenses').insert([payload]), 'Failed saving expense');
+        addNotification(`تم تسجيل مصروف تشغيلي جديد: ${payload.type}`);
+        if ($('#expType')) $('#expType').value = '';
+        if ($('#expAmount')) $('#expAmount').value = '';
+        if ($('#expDate')) $('#expDate').value = todayStr();
+        if ($('#expNotes')) $('#expNotes').value = '';
+        await loadExpenses();
+        renderExpenses();
+      if ($('#expDate') && !$('#expDate').value) $('#expDate').value = todayStr();
+      } catch (err) {
+        console.error(err);
+        toast('فشل حفظ المصروف التشغيلي. تأكد من وجود جدول expenses في Supabase.', 'warn');
+      }
+    }
+
+
     function renderAll() {
       renderHeader();
       fillClientSelects();
@@ -2293,6 +2386,7 @@
       renderCaseInventoryAvailable();
       renderCaseUsageTable();
       renderUsers();
+      renderExpenses();
       fillCaseClientData();
     }
 
@@ -2307,6 +2401,8 @@
       $('#saveClientBtn').onclick = saveClient;
       $('#refreshClientsBtn').onclick = async () => { await loadClients(); renderClientsTable($('#clientSearch').value); };
       $('#clientSearch').oninput = (e) => renderClientsTable(e.target.value);
+      if ($('#saveExpenseBtn')) $('#saveExpenseBtn').onclick = saveExpense;
+      if ($('#expDate')) $('#expDate').value = todayStr();
 
       $('#saveBookingBtn').onclick = saveBooking;
       $('#sendToSpecialistBtn').onclick = sendCaseToSpecialist;
